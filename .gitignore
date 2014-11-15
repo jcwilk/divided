@@ -14,3 +14,39 @@
 # Ignore all logfiles and tempfiles.
 /log/*.log
 /tmp
+
+# Ignore phaser.io example files
+/public/_site/
+/public/animation/
+/public/arcade physics/
+/public/assets/
+/public/audio/
+/public/basics/
+/public/bitmapdata/
+/public/buttons/
+/public/camera/
+/public/debug/
+/public/demoscene/
+/public/display/
+#NOTE: Rename index.html to examples.html so it doesn't override the root of your site
+/public/examples.html
+/public/filters/
+/public/games/
+/public/geometry/
+/public/groups/
+/public/input/
+/public/loader/
+/public/misc/
+/public/ninja physics/
+/public/null.html
+/public/p2 physics/
+/public/particles/
+/public/sideview.html
+/public/sprites/
+/public/text/
+/public/tile sprites/
+/public/tilemaps/
+/public/time/
+/public/tweens/
+/public/wip/
+/public/world/
