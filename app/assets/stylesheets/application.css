@@ -10,6 +10,21 @@
  * defined in the other CSS/SCSS files in this directory. It is generally better to create a new
  * file per style scope.
  *
+ *= require jquery-ui-1.10.4.custom.min
  *= require_tree .
  *= require_self
  */
+
+.slider-grid {
+  width: 800px;
+}
+
+th {
+  text-align: left;
+}
+
+.slider {
+  width: 400px;
+  margin-left: 10px;
+  margin-right: 10px;
+}

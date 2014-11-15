@@ -1,6 +1,20 @@
 //= require phaser
 
 $(function() {
+  var sliderContainer = {};
+
+  $('.slider').slider({min: 50, max: 5000,
+    change: function(event,ui){
+      var varname = $(ui.handle.parentElement).data('variable');
+      $('td#'+varname+'-display').html(ui.value);
+      sliderContainer[varname] = ui.value;
+    },
+    create: function(event,ui){
+      var target = $(event.target);
+      sliderContainer[target.data('variable')] = target.data('default');
+    }
+  });
+
   var background, walls, floor, cursors;
   var xPosToX = function(xPos) {
     return xPos*40+20+200;
@@ -22,8 +36,8 @@ $(function() {
   var killTurnForInput = function() {
     if(killGuard) return;
     killGuard = true;
-    setTimeout(function(){killGuard = false},100);
-    killTurnIn(200);
+    setTimeout(function(){killGuard = false},sliderContainer.preventDoubleInputDelay);
+    killTurnIn(sliderContainer.waitAfterInputBeforeTurnEndDelay);
   }
 
   var killTurnIn = function(delay) {
@@ -45,7 +59,7 @@ $(function() {
   var soulNextPos = [soulXPos,soulYPos];
   var soulCurrentPos = [soulXPos,soulYPos];
 
-  var game = new Phaser.Game(800, 600, Phaser.AUTO, '', {
+  var game = new Phaser.Game(800, 600, Phaser.AUTO, 'divided-viewport', {
     preload: function() {
       <%= %w(starfield.jpg slate_flooring_40x40.png 2x2brown40x40.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       game.load.spritesheet('doomfaces', <%= asset_path('doomfaces.png').inspect %>, 30, 32, 42);
@@ -106,7 +120,7 @@ $(function() {
       if (turnDue) {
         turnCount+= 1;
         turnDue = false;
-        killTurnIn(3000);
+        killTurnIn(sliderContainer.turnDuration);
 
         if (nextPos[0] < currentPos[0]) {
           player.animations.stop();
@@ -132,7 +146,7 @@ $(function() {
           game.add.tween(sprite).to({
             x: xPosToX(cPos[0])-sprite.width/2,
             y: yPosToY(cPos[1])-sprite.height/2
-          }, 100, Phaser.Easing.Cubic.InOut, true);
+          }, sliderContainer.animationDuration, Phaser.Easing.Cubic.InOut, true);
         }
 
 
