@@ -15,6 +15,23 @@ $(function() {
     return xToXPos(y+100);
   }
   var turnDue = true;
+  var turnCount = 0;
+  var endPending = false;
+
+  var killGuard = false;
+  var killTurnForInput = function() {
+    if(killGuard) return;
+    killGuard = true;
+    setTimeout(function(){killGuard = false},100);
+    killTurnIn(200);
+  }
+
+  var killTurnIn = function(delay) {
+    var currentCount = turnCount;
+    setTimeout(function(){
+      if(currentCount == turnCount) turnDue = true
+    },delay)
+  }
 
   var player;
   var xPos = 0;
@@ -61,29 +78,35 @@ $(function() {
       if (cursors.left.isDown)
       {
         nextPos[0] = currentPos[0]-1;
+        killTurnForInput();
       }
       else if (cursors.right.isDown)
       {
         nextPos[0] = currentPos[0]+1;
+        killTurnForInput();
       }
 
       if (cursors.up.isDown)
       {
         nextPos[1] = currentPos[1]-1;
+        killTurnForInput();
       }
       else if (cursors.down.isDown)
       {
         nextPos[1] = currentPos[1]+1;
+        killTurnForInput();
       }
 
       if (game.input.activePointer.isDown) {
         nextPos[0] = xToXPos(game.input.activePointer.x);
         nextPos[1] = yToYPos(game.input.activePointer.y);
+        killTurnForInput();
       }
 
       if (turnDue) {
+        turnCount+= 1;
         turnDue = false;
-        setTimeout(function(){turnDue = true},1000);
+        killTurnIn(3000);
 
         if (nextPos[0] < currentPos[0]) {
           player.animations.stop();
@@ -109,20 +132,26 @@ $(function() {
           game.add.tween(sprite).to({
             x: xPosToX(cPos[0])-sprite.width/2,
             y: yPosToY(cPos[1])-sprite.height/2
-          }, 1000, Phaser.Easing.Quadratic.InOut, true);
+          }, 100, Phaser.Easing.Cubic.InOut, true);
         }
 
-        if(Math.abs(soulCurrentPos[0]-currentPos[0]) <= 1 && Math.abs(soulCurrentPos[1]-currentPos[1]) <= 1) {
-          soul.animations.play('explode');
+
+        var isClose = function(){
+          return Math.abs(soulCurrentPos[0]-currentPos[0]) <= 1 && Math.abs(soulCurrentPos[1]-currentPos[1]) <= 1;
         }
-        else {
-          soul.animations.play('waiting');
+
+        if(!isClose()) {
           soulNextPos[0] = soulCurrentPos[0] + Math.round(Math.random()*6-3);
           soulNextPos[1] = soulCurrentPos[0] + Math.round(Math.random()*6-3);
           moveSprite(soul,soulCurrentPos,soulNextPos);
         }
-
         moveSprite(player,currentPos,nextPos);
+        soul.animations.stop();
+        if(isClose()) {
+          soul.animations.play('explode');
+        } else {
+          soul.animations.play('waiting');
+        }
       }
     }
   });
