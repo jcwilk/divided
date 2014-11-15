@@ -21,6 +21,7 @@ gem 'spring',        group: :development
 gem 'kaminari'
 gem 'haml'
 gem 'puma'
+gem 'rails_12factor', group: :production
 
 #general testing stuffs
 gem 'rspec-rails', '~> 3.0.0', group: [:development, :test]
