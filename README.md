@@ -7,20 +7,24 @@ This is a very rough beginning of a game I'm working on with a friend. It's goin
 
 Because this is at least 50% a fun experiment, it's fairly unique in its architecture. These are the core facets:
 
+* Designed for [Heroku](https://devcenter.heroku.com/articles/how-heroku-works)
+  * 50 connections per dyno so as long as you have ~45 players or less at peak you can run it 100% free
+  * Still entirely generalized so any server with Ruby (2.1.2 atm) and Thin installed should be able to run it fine
+  * Nginx appears to be the go-to copilot
 * [Phaser](http://phaser.io) for super easy desktop/mobile html5 gaming
-* Rails for asset management now and flexibility/robustness for down the road
-* Faye for same-process persistent connections (thanks to @jamesotron for his excellent [faye-rails](https://github.com/jamesotron/faye-rails))
+* [Rails](http://rubyonrails.org/) for asset management now and flexibility/robustness for down the road
+* [Faye](http://faye.jcoglan.com/architecture.html) for same-process persistent connections (thanks to @jamesotron for his excellent [faye-rails](https://github.com/jamesotron/faye-rails))
   * If you look in the git history I just built off of his faye-rails-example :P
-* Thin/EventMachine for concurrent evented awesomeness obviating the need for a background worker
-* Grape (eventually) for concise and dynamic hypermedia APIs (specifically, most likely, HAL)
-* rSpec for test love (soon, still experimenting) since all of the above test so nicely
+* [Thin](http://code.macournoyer.com/thin/usage/)/[EventMachine](https://www.igvita.com/2008/05/27/ruby-eventmachine-the-speed-demon/) for evented awesomeness obviating the need for a background worker
+* [Grape](https://github.com/intridea/grape/wiki) (eventually) for concise and dynamic hypermedia APIs (specifically, most likely, [HAL](http://haltalk.herokuapp.com/explorer/browser.html#/))
+* [RSpec](http://www.rubydoc.info/gems/rspec-expectations/frames) for test love (soon, still experimenting) since all of the above test so nicely
   * Not sure about how well Faye will test, but pub/sub is fairly easy to fudge over in tests
 
 I previously tried working with puma/rails/redis rather than thin/rails/faye/eventmachine and it was a total shitshow trying to get a single dyno to do anything useful. You can peek around at my prior progress in a legacy branch if you want to make fun of me :P
 
-But really, I've spent a -lot- of time and thought into coming up with just the right architecture for a pseudo-turn-based mmo that can, at least until it gets more popular than peaking at around 45 people, (read: not any time soon) run for free on a single dyno on heroku, and very responsively. My hope is that, either through this game or another, I'll eventually figure out or help someone figure out the ultimate seed that will grow into a beautiful community of interconnected player built and maintained mmos.
+But really, I've spent a -lot- of time and thought into coming up with just the right architecture for a pseudo-turn-based mmo that can, at least until it gets more popular than peaking at around 45 people, (read: not any time soon) run for free on a single dyno on heroku without sacrificing responsiveness or maintainably. By "pseudo-turn-based" I mean being a little creative with designing the game to not be 100% realtime so you have a little leniency on your architecture. Sure you -can- do full-duplex streaming with websockets using this stack, but you'd be pressed for cycles to do anything interesting with it to ~45 clients on a single thread while staying responsive without most of the high level benefits like proxy caching, standardized REST discoverability, etc. So by "pseudo-turn-based" I mean "low expectations of action-reaction responsiveness in multiplayer" since just a little bit of leeway lets us tap into the development efficiency of Ruby.
 
-Why pay a monthly fee when you could own your whole server/game for that cost or less?
+In the long term my hope is that, either through this game or another, I'll eventually figure out or help someone figure out the ultimate seed that will grow into a beautiful community of interconnected player built and maintained mmos. Why pay a monthly fee when you could own your whole server/game for that cost or less?
 
 ### When?
 
@@ -40,7 +44,7 @@ Feel free to ask questions or provide criticisms! (unless it's refactoring/clean
 
 ### Who?
 
-Just us chickens. If you want to take part, probaby don't bother yet as saying it was still under heavy construction would be generous, but please do let me know if you have interest! Eventually it'll be the same pull reuqest dealio as anything else, hopefully.
+Just us chickens. If you want to take part, probaby don't bother yet as saying it was still under heavy construction would be generous, but definitely do contact me via email (jcwilkatgmaildotcom) and let me know if you have interest! Once things are a bit more settle though it'll be the same pull reuqest dealio as anything else.
 
 ### License
 
