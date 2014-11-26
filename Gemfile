@@ -10,6 +10,7 @@ gem 'haml-rails'
 # gem 'sdoc', '~> 0.4.0',          group: :doc
 gem 'jquery-rails'
 gem 'momentjs-rails'
+gem 'rails_12factor'
 
 group :assets do
   gem 'sass-rails',   '~> 4.0.3'
