@@ -22,7 +22,7 @@ Because this is at least 50% a fun experiment, it's fairly unique in its archite
 
 I previously tried working with puma/rails/redis rather than thin/rails/faye/eventmachine and it was a total shitshow trying to get a single dyno to do anything useful. You can peek around at my prior progress in a legacy branch if you want to make fun of me :P
 
-But really, I've spent a -lot- of time and thought into coming up with just the right architecture for a pseudo-turn-based mmo that can, at least until it gets more popular than peaking at around 45 people, (read: not any time soon) run for free on a single dyno on heroku without sacrificing responsiveness or maintainably. By "pseudo-turn-based" I mean being a little creative with designing the game to not be 100% realtime so you have a little leniency on your architecture. Sure you -can- do full-duplex streaming with websockets using this stack, but you'd be pressed for cycles to do anything interesting with it to ~45 clients on a single thread while staying responsive without most of the high level benefits like proxy caching, standardized REST discoverability, etc. So by "pseudo-turn-based" I mean "low expectations of action-reaction responsiveness in multiplayer" since just a little bit of leeway lets us tap into the development efficiency of Ruby.
+But really, I've spent a lot of time and thought into finding just the right architecture for a pseudo-turn-based mmo that can, at least until it gets more popular than peaking at around 45 people, (read: not any time soon) run for free on a single dyno on heroku without sacrificing responsiveness or maintainability. By "pseudo-turn-based" I mean being a little creative with designing the game to not be 100% realtime so you have a little leniency on your architecture. Sure you -can- do full-duplex streaming with websockets using this stack, but you'd be pressed for cycles to do anything interesting with it to ~45 clients on a single thread while staying responsive without most of the high level benefits like proxy caching, standardized REST discoverability, etc. So by "pseudo-turn-based mmo" I mean "low expectations of action-reaction responsiveness in medium-sized multiplayer" since just a little bit of leeway lets us kick our shoes off and dip into the soothing simplicity of Ruby. :palm_tree:
 
 In the long term my hope is that, either through this game or another, I'll eventually figure out or help someone figure out the ultimate seed that will grow into a beautiful community of interconnected player built and maintained mmos. Why pay a monthly fee when you could own your whole server/game for that cost or less?
 
@@ -38,7 +38,16 @@ The current, (mostly) stable state of the game will typically be running on [thi
 
 To run locally, use `bundle exec thin start -R config.ru`. Beware that this will not work in rackup development mode, see [this issue](https://github.com/faye/faye/issues/25) for details.
 
-It should be immediately deployable, just do a `heroku create` and shove it on up there with a `git push heroku master` (or `branchname:master` instead of `master` if you're working under a different branch... But you know that.)
+It should be immediately deployable:
+
+```sh
+$ git clone https://github.com/jcwilk/divided.git
+$ cd divided
+$ heroku create <app name goes here>
+```
+
+Voila, then after the heroku deploy spam it should be accessible at http://<app name goes here>.herokuapp.com/ or whatever better name you chose. No plugins required (yet, at least).
+
 
 Feel free to ask questions or provide criticisms! (unless it's refactoring/cleanup/testing suggestions... stuff is in full retard mode until the design dust settles a bit, sorry! After that I'll eat them up :P)
 
