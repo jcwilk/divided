@@ -43,17 +43,17 @@ It should be immediately deployable:
 ```sh
 $ git clone https://github.com/jcwilk/divided.git
 $ cd divided
-$ heroku create <app name goes here>
+$ heroku create app-name-goes-here
 ```
 
-Voila, then after the heroku deploy spam it should be accessible at http://<app name goes here>.herokuapp.com/ or whatever better name you chose. No plugins required (yet, at least).
+Voila, then after the heroku deploy spam it should be accessible at http://app-name-goes-here.herokuapp.com/ or whatever better name you chose. No plugins required (yet, at least).
 
 
 Feel free to ask questions or provide criticisms! (unless it's refactoring/cleanup/testing suggestions... stuff is in full retard mode until the design dust settles a bit, sorry! After that I'll eat them up :P)
 
 ### Who?
 
-Just us chickens. If you want to take part, probaby don't bother yet as saying it was still under heavy construction would be generous, but definitely do contact me via email (jcwilkatgmaildotcom) and let me know if you have interest! Once things are a bit more settle though it'll be the same pull reuqest dealio as anything else.
+Just us chickens. If you want to take part, probaby don't bother yet as saying it was still under heavy construction would be generous, but definitely do contact me via email (jcwilkatgmaildotcom) and let me know if you have interest! Once things are a bit more settled though it'll be the same pull request dealio as anything else.
 
 ### License
 
