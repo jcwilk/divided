@@ -3,9 +3,13 @@ class TestsController < ApplicationController
 
   def show
     if params[:id] == "delay"
-      secs = params[:seconds] || 10
+      secs = (params[:seconds] || 10).to_i
+      EM.add_timer(5) do
+        puts "hello!"
+      end
       sleep(secs)
       render text: "Good morning, I slept for many seconds... at least #{secs}!"
+      puts "hi!"
     elsif params[:id] == "stream"
       as_stream do
         loop do

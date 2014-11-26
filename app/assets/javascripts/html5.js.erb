@@ -54,20 +54,39 @@ $(function() {
     },delay)
   }
 
-  var source = new EventSource('/turns?player_uuid='+player_uuid);
-  source.addEventListener('turns.new', function(e) {
-    console.log(e.data);
-    var data = JSON.parse(e.data)
+  // var source = new EventSource('/turns?player_uuid='+player_uuid);
+  // source.addEventListener('turns.new', function(e) {
+  //   console.log(e.data);
+  //   var data = JSON.parse(e.data)
+  //   var new_round = parseInt(data.current_round);
+  //   playerPosMap = data.players;
+
+  //   if (new_round > turnCount) {
+  //     turnCount = new_round;
+  //     console.log('turn '+new_round);
+  //     turnDue = true;
+  //   } else {
+  //     console.log('got dupe turn '+new_round);
+  //   }
+  // });
+  var client = new Faye.Client('/faye');
+
+  client.subscribe('/room_events', function(payload) {
+    console.log(payload);
+    var data = JSON.parse(payload)
     var new_round = parseInt(data.current_round);
     playerPosMap = data.players;
 
-    if (new_round > turnCount) {
+    //if (new_round > turnCount) {
       turnCount = new_round;
       console.log('turn '+new_round);
       turnDue = true;
-    } else {
+    //} else {
       console.log('got dupe turn '+new_round);
-    }
+    //}
+    // time = moment(payload.created_at).format('D/M/YYYY H:mm:ss')
+    // # You probably want to think seriously about XSS here:
+    // $('#chat').append("<li>#{time} : #{payload.message}</li>")
   });
 
   var player;
