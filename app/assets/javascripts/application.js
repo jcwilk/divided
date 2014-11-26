@@ -11,6 +11,7 @@
 // GO AFTER THE REQUIRES BELOW.
 //
 //= require jquery
+//= require jquery_ujs
+//= require jquery-ui-1.10.4.custom.min
 //= require moment
 //= require faye
-//= require_tree .

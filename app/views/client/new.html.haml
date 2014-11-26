@@ -1,0 +1,14 @@
+#divided-viewport
+%table.slider-grid
+  %tr
+    %th Description
+    %th Slider
+    %th Value
+  - @slider_vars.each do |name,default|
+    %tr
+      %td= name
+      %td
+        .slider{:'data-variable' => name, :'data-default' => default}
+      %td{:id => "#{name}-display"}= default
+%script{:type=>"text/javascript"}= "window._divided_player_uuid = #{@player_uuid.inspect}".html_safe
+= javascript_include_tag 'html5'
