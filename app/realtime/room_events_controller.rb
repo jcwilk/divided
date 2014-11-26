@@ -1,11 +1,10 @@
 class RoomEventsController < FayeRails::Controller
-  channel '/room_events' do
-    monitor :subscribe do
-      puts "new sub!"
+  channel '/room_events/advance' do
+    monitor :publish do
+      puts "Received on #{channel}: #{inspect}"
     end
-    monitor :unsubscribe do
-      puts "lost sub!"
-    end
+  end
+  channel '/room_events/waiting' do
     monitor :publish do
       puts "Received on #{channel}: #{inspect}"
     end

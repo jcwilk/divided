@@ -46,7 +46,7 @@ module FayeRailsDemo
 
     config.middleware.delete Rack::Lock
     config.middleware.use FayeRails::Middleware, mount: '/faye', :timeout => 25 do
-      map '/room_events' => RoomEventsController
+      map '/room_events/*' => RoomEventsController
       map default: :block
     end
     # Use SQL instead of Active Record's schema dumper when creating the database.

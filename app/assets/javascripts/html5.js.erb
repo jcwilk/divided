@@ -71,12 +71,13 @@ $(function() {
   // });
   var client = new Faye.Client('/faye');
 
-  client.subscribe('/room_events', function(payload) {
+  client.subscribe('/room_events/advance', function(payload) {
     console.log(payload);
-    var data = JSON.parse(payload)
+    var data = JSON.parse(payload);
     var new_round = parseInt(data.current_round);
     playerPosMap = data.players;
 
+    //TODO: need to get this working again to avoid doubleposting in single player mode
     //if (new_round > turnCount) {
       turnCount = new_round;
       console.log('turn '+new_round);
@@ -84,10 +85,15 @@ $(function() {
     //} else {
       //console.log('got dupe turn '+new_round);
     //}
-    // time = moment(payload.created_at).format('D/M/YYYY H:mm:ss')
-    // # You probably want to think seriously about XSS here:
-    // $('#chat').append("<li>#{time} : #{payload.message}</li>")
   });
+
+  client.subscribe('/room_events/waiting', function(payload) {
+    console.log(payload);
+    var data = JSON.parse(payload);
+    if(data.current_round == turnCount && data) {
+
+    }
+  })
 
   var player;
   var xPos = 0;

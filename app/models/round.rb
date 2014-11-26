@@ -3,7 +3,7 @@ module Round
     if recent_activity?
       puts 'advancing!'
       @current_number = current_number+1
-      RoomEventsController.publish('/room_events', current_data.to_json)
+      RoomEventsController.publish('/room_events/advance', current_data.to_json)
       Round.reset
       curr_num = current_number
       EM.add_timer(5) do
@@ -34,10 +34,14 @@ module Round
   def self.add_move(player_uuid, move)
     player_data[player_uuid] = move
     @last_move = Time.now
+    new_move = !recent_players_map[player_uuid]
     recent_players_map[player_uuid] = Time.now
+
     if !active? || (recent_players - player_data.keys).empty?
       @active = true
       advance
+    elsif new_move
+      RoomEventsController.publish('/room_events/waiting', 'waiting!')
     end
   end
 
