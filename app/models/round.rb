@@ -75,6 +75,7 @@ module Round
     end
   end
 
+  #TODO - this gets called too many times
   def self.recent_players
     recent_players_map.select {|k,v| Time.now - v < 10 }.keys.tap{|players| puts "#{players.size} players"}
   end

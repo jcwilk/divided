@@ -93,6 +93,7 @@ $(function() {
 
         if (icon) {
           icon.reset(x,y);
+          icon.alpha = 1;
         } else {
           icon = waitingIcons.create(x,y,'hourglass');
         }
@@ -107,7 +108,7 @@ $(function() {
         if(!img) return;
         console.log('killing');
         game.add.tween(img)
-          .to({y: img.y-20, alpha: 0},500,Phaser.Easing.Default,true)
+          .to({y: img.y-20, alpha: 0},200,Phaser.Easing.Default,true)
           .onComplete.add(function(){
             img.kill();
           });
