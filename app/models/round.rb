@@ -1,5 +1,18 @@
 module Round
+  ROUND_DURATION = 5 #seconds
+  PLAYER_EXPIRE = ROUND_DURATION*5 #seconds
+
   def self.advance
+    @last_recent_players||= recent_players
+    lost_players = @last_recent_players - recent_players
+
+    lost_players.each do |uuid|
+      RoomEventsController.publish('/room_events/waiting', {player_uuid: uuid,current_round: current_number}.to_json)
+      @waiting_players.delete(uuid) if @waiting_players
+    end
+    #TODO: so race condition. wow.
+    @last_recent_players = recent_players
+
     if recent_activity?
       puts 'advancing!'
       @current_number = current_number+1
@@ -23,7 +36,7 @@ module Round
   end
 
   def self.recent_activity?
-    @last_move && Time.now - @last_move < 20
+    recent_players.present?
   end
 
   def self.current_number
@@ -33,7 +46,6 @@ module Round
 
   def self.add_move(player_uuid, move)
     player_data[player_uuid] = move
-    @last_move = Time.now
     new_move = !recent_players_map[player_uuid]
     recent_players_map[player_uuid] = Time.now
     waiting_players << player_uuid
@@ -77,7 +89,7 @@ module Round
 
   #TODO - this gets called too many times
   def self.recent_players
-    recent_players_map.select {|k,v| Time.now - v < 10 }.keys.tap{|players| puts "#{players.size} players"}
+    recent_players_map.select {|k,v| Time.now - v < PLAYER_EXPIRE }.keys.tap{|players| puts "#{players.size} players"}
   end
 
   def self.recent_players_map
