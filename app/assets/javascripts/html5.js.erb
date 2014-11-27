@@ -29,30 +29,8 @@ $(function() {
   var yToYPos = function(y) {
     return xToXPos(y+100);
   }
-  var turnDue = true;
   var turnCount = 0;
-  var endPending = false;
   var playerPosMap = {};
-
-  var killGuard = false;
-  var killTurnForInput = function() {
-    //console.log('input');
-    if(killGuard) return;
-    killGuard = true;
-    setTimeout(function(){killGuard = false},sliderContainer.preventDoubleInputDelay);
-    killTurnIn(sliderContainer.waitAfterInputBeforeTurnEndDelay);
-  }
-
-  var killTurnIn = function(delay) {
-    console.log('killturn');
-    var currentCount = turnCount;
-    setTimeout(function(){
-      if(currentCount == turnCount) {
-        console.log('post');
-        $.post('/turns', {current_round: turnCount, player_uuid: player_uuid, next_pos: nextPos});
-      }
-    },delay)
-  }
 
   // var source = new EventSource('/turns?player_uuid='+player_uuid);
   // source.addEventListener('turns.new', function(e) {
@@ -69,45 +47,20 @@ $(function() {
   //     console.log('got dupe turn '+new_round);
   //   }
   // });
-  var client = new Faye.Client('/faye');
-
-  client.subscribe('/room_events/advance', function(payload) {
-    console.log(payload);
-    var data = JSON.parse(payload);
-    var new_round = parseInt(data.current_round);
-    playerPosMap = data.players;
-
-    //TODO: need to get this working again to avoid doubleposting in single player mode
-    //if (new_round > turnCount) {
-      turnCount = new_round;
-      console.log('turn '+new_round);
-      turnDue = true;
-    //} else {
-      //console.log('got dupe turn '+new_round);
-    //}
-  });
-
-  client.subscribe('/room_events/waiting', function(payload) {
-    console.log(payload);
-    var data = JSON.parse(payload);
-    if(data.current_round == turnCount && data) {
-
-    }
-  })
+  var faye = new Faye.Client('/faye');
 
   var player;
-  var xPos = 0;
-  var yPos = 0;
-  var nextPos = [xPos,yPos];
-  var currentPos = [xPos,yPos];
-
+  var currentPos = [0,0];
   var souls;
+  var isPointerDown = false;
+  var waitingIcons;
 
   var game = new Phaser.Game(800, 600, Phaser.AUTO, 'divided-viewport', {
     preload: function() {
       <%= %w(starfield.jpg slate_flooring_40x40.png 2x2brown40x40.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       game.load.spritesheet('doomfaces', <%= asset_path('doomfaces.png').inspect %>, 30, 32, 42);
       game.load.spritesheet('lost_soul_basic', <%= asset_path('lost_soul_basic.png').inspect %>, 104, 90, 8);
+      game.load.image('hourglass', <%= asset_path('hourglass_small.png').inspect %>);
     },
     create: function(){
       background = game.add.tileSprite(0, 0, 800, 600, 'starfield');
@@ -118,65 +71,94 @@ $(function() {
       walls.add(game.add.tileSprite(600,100,40,400,'slate_flooring_40x40'));
       floor = game.add.tileSprite(200,100,400,400,'2x2brown40x40');
 
-      player = game.add.sprite(0,0,'doomfaces');
+      player = game.add.sprite(0,0,'doomfaces',false);
       player.animations.add('waiting',[4,4,4,4,4,4,3,5],2,true);
       player.animations.play('waiting');
+      player.reset(xPosToX(currentPos[0])-player.width/2,yPosToY(currentPos[1])-player.height/2);
 
       souls = game.add.group();
 
-      cursors = game.input.keyboard.createCursorKeys();
-    },
-    update: function(){
-      if (cursors.left.isDown)
-      {
-        nextPos[0] = currentPos[0]-1;
-        killTurnForInput();
-      }
-      else if (cursors.right.isDown)
-      {
-        nextPos[0] = currentPos[0]+1;
-        killTurnForInput();
-      }
+      waitingIcons = game.add.group();
 
-      if (cursors.up.isDown)
-      {
-        nextPos[1] = currentPos[1]-1;
-        killTurnForInput();
-      }
-      else if (cursors.down.isDown)
-      {
-        nextPos[1] = currentPos[1]+1;
-        killTurnForInput();
-      }
+      var waitingMap = {}
+      var markAsChoosing = function(uuid) {
+        var pos = playerPosMap[uuid];
+        if(!pos || waitingMap[uuid]) return;
 
-      if (game.input.activePointer.isDown) {
-        //console.log('pointer');
-        nextPos[0] = xToXPos(game.input.activePointer.x);
-        nextPos[1] = yToYPos(game.input.activePointer.y);
-        killTurnForInput();
-      }
+        console.log("marking as choosing");
 
-      if (turnDue) {
-        turnDue = false;
-        //killTurnIn(sliderContainer.turnDuration);
+        var icon = waitingIcons.getFirstDead();
+        var x = xPosToX(pos[0])-20;
+        var y = yPosToY(pos[1])-20;
 
-        var moveSprite = function(sprite,cPos,nPos) {
-          cPos[0] = nPos[0];
-          cPos[1] = nPos[1];
-
-          if(cPos[0] < 0) cPos[0] = 0;
-          if(cPos[0] > 9) cPos[0] = 9;
-          if(cPos[1] < 0) cPos[1] = 0;
-          if(cPos[1] > 9) cPos[1] = 9;
-
-          game.add.tween(sprite).to({
-            x: xPosToX(cPos[0])-sprite.width/2,
-            y: yPosToY(cPos[1])-sprite.height/2
-          }, sliderContainer.animationDuration, Phaser.Easing.Cubic.InOut, true);
+        if (icon) {
+          icon.reset(x,y);
+        } else {
+          icon = waitingIcons.create(x,y,'hourglass');
         }
 
+        game.add.tween(icon).to({y: y-10},500,Phaser.Easing.Default,true,0,Number.MAX_VALUE,true);
+        waitingMap[uuid] = icon;
+      }
+
+      var markAsWaiting = function(uuid) {
+        console.log("marking as waiting");
+        var img = waitingMap[uuid];
+        if(!img) return;
+        console.log('killing');
+        game.add.tween(img)
+          .to({y: img.y-20, alpha: 0},500,Phaser.Easing.Default,true)
+          .onComplete.add(function(){
+            img.kill();
+          });
+        delete waitingMap[uuid];
+      }
+
+      faye.subscribe('/room_events/waiting', function(payload) {
+        console.log('waiting: '+payload);
+        var data = JSON.parse(payload);
+        if (data.current_round == turnCount) {
+          markAsWaiting(data.player_uuid);
+        }
+      });
+
+      var moveSprite = function(sprite,cPos,nPos) {
+        cPos[0] = nPos[0];
+        cPos[1] = nPos[1];
+
+        game.add.tween(sprite).to({
+          x: xPosToX(cPos[0])-sprite.width/2,
+          y: yPosToY(cPos[1])-sprite.height/2
+        }, sliderContainer.animationDuration, Phaser.Easing.Cubic.InOut, true);
+      }
+
+      var isClose = function(soulPos){
+        return Math.abs(soulPos[0]-currentPos[0]) <= 1 && Math.abs(soulPos[1]-currentPos[1]) <= 1;
+      }
+
+      faye.subscribe('/room_events/advance', function(payload) {
+        console.log('advance! '+payload);
+        var data = JSON.parse(payload);
+
+        //TODO: check round
+
+
+        $.each(waitingMap, function(uuid,_){
+          markAsWaiting(uuid);
+        });
+
+        var numOfPlayers = 0;
+        for (k in data.players) if (data.players.hasOwnProperty(k)) numOfPlayers++;
+
+        $.each(data.players, function(uuid,pos){
+          playerPosMap[uuid] = pos;
+          console.log(data.players);
+          if (numOfPlayers > 1) markAsChoosing(uuid);
+        });
+        console.log('new pos map - '+JSON.stringify(playerPosMap))
+        turnCount = data.current_round;
+
         var playerPos = playerPosMap[player_uuid] || currentPos;
-        delete playerPosMap[player_uuid];
 
         if (playerPos[0] < currentPos[0]) {
           player.animations.stop();
@@ -192,11 +174,9 @@ $(function() {
 
         moveSprite(player,currentPos,playerPos);
 
-        var isClose = function(soulPos){
-          return Math.abs(soulPos[0]-currentPos[0]) <= 1 && Math.abs(soulPos[1]-currentPos[1]) <= 1;
-        }
-
         $.each(playerPosMap, function(uuid, soulData){
+          if(uuid == player_uuid) return;
+
           var soul = souls.filter(function(s,i,group){return s.uuid == uuid}).first;
           if(soul){
             moveSprite(soul,soul.currentPos,soulData);
@@ -218,6 +198,30 @@ $(function() {
           } else {
             soul.animations.play('waiting');
           }
+        });
+      });
+    },
+    update: function(){
+      if (!isPointerDown && game.input.activePointer.isDown) {
+        isPointerDown = true;
+      } else if (isPointerDown && game.input.activePointer.isUp) {
+        isPointerDown = false;
+        var nextPos = [];
+        nextPos[0] = xToXPos(game.input.activePointer.x);
+        nextPos[1] = yToYPos(game.input.activePointer.y);
+
+        for(var i = 0; i < 2; i++) {
+          if(nextPos[i] < 0) nextPos[i] = 0;
+          if(nextPos[i] > 9) nextPos[i] = 9;
+        }
+
+        console.log('post!');
+
+        //TODO: retry
+        $.post('/turns', {
+          current_round: turnCount,
+          player_uuid: player_uuid,
+          next_pos: nextPos
         });
       }
     }
