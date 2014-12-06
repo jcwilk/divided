@@ -55,12 +55,29 @@ $(function() {
   var isPointerDown = false;
   var waitingIcons;
 
+  var FACE_WIDTH = 30;
+  var FACE_HEIGHT = 32;
+
+  var newWaitingDoom = function(xPos,yPos){
+    var doom = game.add.sprite(
+      xPosToX(xPos)-FACE_WIDTH/2, yPosToY(yPos)-FACE_HEIGHT/2, 'doomfaces'
+    );
+
+    doom.animations.add('waiting',[4,4,4,4,4,4,3,5],2,true);
+    doom.animations.play('waiting');
+
+    return doom;
+  }
+
   var game = new Phaser.Game(800, 600, Phaser.AUTO, 'divided-viewport', {
     preload: function() {
       <%= %w(starfield.jpg slate_flooring_40x40.png 2x2brown40x40.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
-      game.load.spritesheet('doomfaces', <%= asset_path('doomfaces.png').inspect %>, 30, 32, 42);
+      game.load.spritesheet('doomfaces', <%= asset_path('doomfaces.png').inspect %>, FACE_WIDTH, FACE_HEIGHT, 42);
       game.load.spritesheet('lost_soul_basic', <%= asset_path('lost_soul_basic.png').inspect %>, 104, 90, 8);
       game.load.image('hourglass', <%= asset_path('hourglass_small.png').inspect %>);
+      game.load.image('player_blip', <%= asset_path('green_blip_19.png').inspect %>);
+      game.load.image('orange_glow', <%= asset_path('orange_40x40.png').inspect %>);
+      game.load.image('blue_glow', <%= asset_path('blue_40x40.png').inspect %>);
     },
     create: function(){
       background = game.add.tileSprite(0, 0, 800, 600, 'starfield');
@@ -71,10 +88,11 @@ $(function() {
       walls.add(game.add.tileSprite(600,100,40,400,'slate_flooring_40x40'));
       floor = game.add.tileSprite(200,100,400,400,'2x2brown40x40');
 
-      player = game.add.sprite(0,0,'doomfaces',false);
-      player.animations.add('waiting',[4,4,4,4,4,4,3,5],2,true);
-      player.animations.play('waiting');
-      player.reset(xPosToX(currentPos[0])-player.width/2,yPosToY(currentPos[1])-player.height/2);
+      player = newWaitingDoom(currentPos[0],currentPos[1]);
+
+      player.blip = game.add.sprite(14.5,-5,'player_blip',false);
+      player.blip.anchor.setTo(0.5);
+      player.addChild(player.blip);
 
       souls = game.add.group();
 
@@ -182,20 +200,15 @@ $(function() {
           if(soul){
             moveSprite(soul,soul.currentPos,soulData);
           } else {
-            soul = game.add.sprite(-100,-100,'lost_soul_basic');
-            soul.x = xPosToX(soulData[0])-soul.width/2;
-            soul.y = yPosToY(soulData[1])-soul.height/2;
+            soul = newWaitingDoom(soulData[0],soulData[1]);
             souls.add(soul);
-            soul.animations.add('waiting',[0,1],2,true);
-            soul.animations.add('explode',[1,2,2,3,3,4,5,6,7],6,false);
-            soul.animations.play('waiting');
             soul.currentPos = soulData;
             soul.uuid = uuid;
           }
 
           soul.animations.stop();
           if(isClose(soul.currentPos)) {
-            soul.animations.play('explode');
+            soul.animations.frame = 40;
           } else {
             soul.animations.play('waiting');
           }
