@@ -95,4 +95,9 @@ module Round
   def self.recent_players_map
     @recent_players_map||= {}
   end
+
+  def self.reset #testing hax
+    @player_data = @waiting_players = @current_number = nil
+    @last_recent_players = @active = nil
+  end
 end
