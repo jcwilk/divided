@@ -34,6 +34,10 @@ describe Round do
       Round.add_move(uuid,move)
     end
 
+    def recent_players
+      Player.recent.map(&:uuid)
+    end
+
     shared_examples_for "single player mode" do
       it 'advances the round' do
         finish do
@@ -48,10 +52,10 @@ describe Round do
         end
       end
 
-      it 'includes only the new player in the recently moved list' do
+      it 'only adds the new player to the recent players list' do
         finish do
           add_move
-          expect(Round.recent_players).to eql([new_uuid])
+          expect(recent_players).to eql([new_uuid])
         end
       end
     end
@@ -76,7 +80,7 @@ describe Round do
 
       it 'includes both players in the recently moved list' do
         add_move
-        expect(Round.recent_players.sort).to eql(['old-uuid',new_uuid].sort)
+        expect(recent_players.sort).to eql(['old-uuid',new_uuid].sort)
       end
     end
 

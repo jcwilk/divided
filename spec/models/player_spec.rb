@@ -7,7 +7,7 @@ describe Player do
   let(:uuid) { 'some-uuid' }
 
   def recent_player?
-    Player.recent.any? {|p| p.uuid == uuid }
+    Player.recent_uuid?(uuid)
   end
 
   describe 'marking a player as active' do

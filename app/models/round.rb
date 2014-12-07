@@ -3,6 +3,7 @@ module Round
   PLAYER_EXPIRE = ROUND_DURATION*5 #seconds
 
   def self.advance
+    recent_players = Player.recent.map(&:uuid)
     @last_recent_players||= recent_players
     lost_players = @last_recent_players - recent_players
 
@@ -36,7 +37,7 @@ module Round
   end
 
   def self.recent_activity?
-    recent_players.present?
+    Player.recent.present?
   end
 
   def self.current_number
@@ -46,15 +47,14 @@ module Round
 
   def self.add_move(player_uuid, move)
     player_data[player_uuid] = move
-    new_move = !recent_players_map[player_uuid]
-    recent_players_map[player_uuid] = Time.now
+    new_move = !Player.recent_uuid?(player_uuid)
+    Player.mark_active(player_uuid)
     waiting_players << player_uuid
 
-    p recent_player_data
     p waiting_players
 
     if active?
-      remaining_players = Set.new(recent_players) - waiting_players
+      remaining_players = Set.new(Player.recent.map(&:uuid)) - waiting_players
       puts "remaining - #{remaining_players}"
 
       if remaining_players.present?
@@ -77,7 +77,8 @@ module Round
   end
 
   def self.recent_player_data
-    player_data.select {|k,v| recent_players.include?(k) }
+    #TODO: not very efficient
+    player_data.select {|k,v| Player.recent_uuid?(k) }
   end
 
   def self.current_data
@@ -87,11 +88,6 @@ module Round
     end
   end
 
-  #TODO - this gets called too many times
-  def self.recent_players
-    recent_players_map.select {|k,v| Time.now - v < PLAYER_EXPIRE }.keys.tap{|players| puts "#{players.size} players"}
-  end
-
   def self.recent_players_map
     @recent_players_map||= {}
   end
@@ -99,5 +95,6 @@ module Round
   def self.reset #testing hax
     @player_data = @waiting_players = @current_number = nil
     @last_recent_players = @active = nil
+    Player.reset
   end
 end

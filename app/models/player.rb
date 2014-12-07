@@ -8,6 +8,10 @@ class Player < Hashie::Dash
       all.select {|p| p.last_seen > Time.now - PLAYER_EXPIRE }
     end
 
+    def recent_uuid?(uuid)
+      recent.any? {|p| p.uuid == uuid }
+    end
+
     def waiting
 
     end
@@ -19,6 +23,10 @@ class Player < Hashie::Dash
       else
         all << new(uuid: uuid)
       end
+    end
+
+    def reset
+      @all = nil
     end
 
     private
