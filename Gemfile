@@ -8,6 +8,8 @@ gem 'haml-rails'
 gem 'jquery-rails'
 gem 'momentjs-rails'
 gem 'rails_12factor'
+gem 'hashie'
+gem 'roar', '1.0.0.beta2'
 
 group :assets do
   gem 'sass-rails',   '~> 4.0.3'
