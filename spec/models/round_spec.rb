@@ -12,7 +12,7 @@ describe Round do
       example.run
       finish if !@explicit_finish
 
-      EM.add_timer(5) do
+      EM.add_timer(10) do
         fail "out of time!"
       end
     end
@@ -20,7 +20,16 @@ describe Round do
 
   def finish(&block)
     @explicit_finish = true
-    defer do
+    EM.defer do
+      block.call if block
+      stop
+    end
+  end
+
+  #TODO: this currently blocks tests until it finishes in realtime :'(
+  def finish_in(seconds, &block)
+    @explicit_finish = true
+    EM.add_timer(seconds) do
       block.call if block
       stop
     end
@@ -38,10 +47,14 @@ describe Round do
       Player.recent.map(&:uuid)
     end
 
+    def current_round
+      Round.current_data[:current_round]
+    end
+
     shared_examples_for "single player mode" do
       it 'advances the round' do
         finish do
-          expect { add_move }.to change { Round.current_number }.by(1)
+          expect { add_move }.to change { current_round }.by(1)
         end
       end
 
@@ -70,7 +83,7 @@ describe Round do
       end
 
       it 'does not advance the round' do
-        expect { add_move }.not_to change { Round.current_number }
+        expect { add_move }.not_to change { current_round }
       end
 
       it 'leaves only the new player as waiting' do
@@ -82,12 +95,25 @@ describe Round do
         add_move
         expect(recent_players.sort).to eql(['old-uuid',new_uuid].sort)
       end
+
+      context 'and after the max round duration has elapsed' do
+        before do
+          @old_round = current_round
+          add_move
+        end
+
+        it 'advances the round' do
+          finish_in(Round::ROUND_DURATION) do
+            expect(current_round).to eql(@old_round+1)
+          end
+        end
+      end
     end
 
     context 'after another player has moved long ago' do
       before do
         add_move('old-uuid')
-        Timecop.travel(Time.now+Round::PLAYER_EXPIRE*2)
+        Timecop.travel(Time.now+Player::PLAYER_EXPIRE*2)
       end
 
       it_behaves_like "single player mode"

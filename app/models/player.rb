@@ -12,9 +12,9 @@ class Player < Hashie::Dash
       recent.any? {|p| p.uuid == uuid }
     end
 
-    def waiting
+    # def waiting
 
-    end
+    # end
 
     def mark_active(uuid)
       player = get_by_uuid(uuid)
@@ -49,15 +49,23 @@ class Player < Hashie::Dash
   def initialize(*args)
     super
     touch
+    extend Player::Representer
   end
 
   def touch
     @last_seen = Time.now
   end
 
-  class Representer < Roar::Decorator
+  # class CollectionRepresenter < Roar::Decorator
+  #   include Roar::JSON
+
+  #   collection :players, extend: Player::Representer, class: Player
+  # end
+
+  module Representer
     include Roar::JSON
 
     property :uuid
+    property :last_seen
   end
 end
