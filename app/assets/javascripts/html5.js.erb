@@ -137,6 +137,7 @@ $(function() {
         console.log('waiting: '+payload);
         var data = JSON.parse(payload);
         if (data.current_round == turnCount) {
+          console.log('marking');
           markAsWaiting(data.player_uuid);
         }
       });
@@ -175,7 +176,7 @@ $(function() {
           if (numOfPlayers > 1) markAsChoosing(uuid);
         });
         console.log('new pos map - '+JSON.stringify(playerPosMap))
-        turnCount = data.current_round;
+        turnCount = data.current_round+1;
 
         var playerPos = playerPosMap[player_uuid] || currentPos;
 
