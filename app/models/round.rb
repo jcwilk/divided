@@ -2,36 +2,14 @@ class Round
   ROUND_DURATION = 5 #seconds
 
   class << self
-    delegate :waiting_players, :player_data, :current_data,
+    delegate :waiting_players, :player_data, :current_data, :add_move,
       to: :current_round
 
-    def add_move(player_uuid, move)
-      player_data[player_uuid] = move
-      Player.mark_active(player_uuid)
-      waiting_players << player_uuid
-
-      remaining_players = Set.new(Player.recent.map(&:uuid)) - waiting_players
-      puts "remaining - #{remaining_players.inspect}"
-
-      if remaining_players.present?
-        puts 'peeps remaining!'
-        RoomEventsController.publish('/room_events/waiting', {player_uuid: player_uuid,current_round: current_number}.to_json)
-      else
-        puts 'advancin'
-        advance
-      end
-    end
-
     def advance
-      Round.timer.cancel if Round.timer
       current_round.complete
 
       all << new(current_round)
 
-      return if current_round.participants.blank?
-
-      curr_num = current_number
-      puts 'setting timer...'
       current_round.start
     end
 
@@ -70,6 +48,23 @@ class Round
     end
   end
 
+  def add_move(player_uuid, move)
+    player_data[player_uuid] = move
+    Player.mark_active(player_uuid)
+    waiting_players << player_uuid
+
+    remaining_players = Set.new(participants.map(&:uuid)) - waiting_players
+    puts "remaining - #{remaining_players.inspect}"
+
+    if remaining_players.present?
+      puts 'peeps remaining!'
+      RoomEventsController.publish('/room_events/waiting', {player_uuid: player_uuid,current_round: index}.to_json)
+    else
+      puts 'advancin'
+      Round.advance
+    end
+  end
+
   def current_data
     {}.tap do |data|
       data[:players] = recent_player_data
@@ -87,6 +82,8 @@ class Round
   end
 
   def start
+    return if participants.blank?
+
     curr_index = index
     EM.add_timer(ROUND_DURATION) do
       Round.advance if Round.current_number == curr_index
