@@ -10,38 +10,33 @@ class Round
       Player.mark_active(player_uuid)
       waiting_players << player_uuid
 
-      if active?
-        remaining_players = Set.new(Player.recent.map(&:uuid)) - waiting_players
-        puts "remaining - #{remaining_players.inspect}"
+      remaining_players = Set.new(Player.recent.map(&:uuid)) - waiting_players
+      puts "remaining - #{remaining_players.inspect}"
 
-        if remaining_players.present?
-          puts 'peeps remaining!'
-          RoomEventsController.publish('/room_events/waiting', {player_uuid: player_uuid,current_round: current_number}.to_json)
-        else
-          puts 'advancin'
-          advance
-        end
+      if remaining_players.present?
+        puts 'peeps remaining!'
+        RoomEventsController.publish('/room_events/waiting', {player_uuid: player_uuid,current_round: current_number}.to_json)
       else
-        puts 'not active'
-        @active = true
+        puts 'advancin'
         advance
       end
     end
 
     def advance
+      Round.timer.cancel if Round.timer
       current_round.complete
 
-      if recent_activity?
-        start
-      else
-        puts 'not advancing!'
-        @active = nil
-      end
+      all << new(current_round)
+
+      return if current_round.participants.blank?
+
+      curr_num = current_number
+      puts 'setting timer...'
+      current_round.start
     end
 
     def reset #testing hax
       @all = nil
-      @active = nil
       Player.reset
     end
 
@@ -57,32 +52,6 @@ class Round
 
     def all
       @all ||= [new]
-    end
-
-    def active?
-      !!@active
-    end
-
-    def recent_activity?
-      Player.recent.present?
-    end
-
-    def current_number
-      all.length-1
-    end
-
-    def start
-      all << new(current_round)
-      curr_num = current_number
-      puts 'setting timer...'
-      EM.add_timer(ROUND_DURATION) do
-        if Round.current_data[:current_round] == curr_num
-          puts "timer!"
-          Round.advance
-        else
-          puts 'no timer'
-        end
-      end
     end
   end
 
@@ -117,9 +86,21 @@ class Round
     @participants || Player.recent
   end
 
+  def start
+    curr_index = index
+    EM.add_timer(ROUND_DURATION) do
+      Round.advance if Round.current_number == curr_index
+    end
+  end
 
   def complete
     @participants = participants
     RoomEventsController.publish('/room_events/advance', current_data.to_json)
+  end
+
+  private
+
+  def deferred_advance
+    @deferred_advance
   end
 end
