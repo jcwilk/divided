@@ -18,6 +18,10 @@ class Round
       Player.reset
     end
 
+    def last_round
+      all[-2] || new
+    end
+
     def current_round
       all.last
     end
@@ -39,7 +43,7 @@ class Round
     @waiting_players = []
     if father
       @index = father.index + 1
-      @player_data = father.player_data.dup
+      @player_data = father.player_data_with_new.dup
       @last_participants = father.participants
     else
       @index = 0
@@ -48,8 +52,12 @@ class Round
     end
   end
 
-  def add_move(player_uuid, move)
-    player_data[player_uuid] = move
+  def add_move(player_uuid, move = nil)
+    if player_data.key?(player_uuid)
+      raise ArgumentError, "Must provide move on subsequent turns" if move.nil?
+      player_data[player_uuid] = move
+    end
+
     Player.mark_active(player_uuid)
     waiting_players << player_uuid
 
@@ -73,8 +81,15 @@ class Round
   end
 
   def recent_player_data
-    #TODO: make this draw off participants
-    player_data.select {|k,v| Player.recent_uuid?(k) }
+    #TODO: cache this less painfully
+    p = Set.new(participants.map(&:uuid))
+    prior_data = player_data_with_new.select {|k,v| p.include?(k) }
+  end
+
+  def player_data_with_new
+    p = Set.new(waiting_players)
+    new_data = (p - player_data.keys).reduce({}) {|a,e| a.merge(e => get_starting_move(e)) }
+    player_data.merge(new_data)
   end
 
   def participants
@@ -97,7 +112,10 @@ class Round
 
   private
 
-  def deferred_advance
-    @deferred_advance
+  def get_starting_move(uuid)
+    [
+      (Digest.hexencode(uuid).to_i(16)/13%2)*9,
+      (Digest.hexencode(uuid).to_i(16)/7%2)*9
+    ]
   end
 end
