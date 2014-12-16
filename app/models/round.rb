@@ -2,7 +2,7 @@ class Round
   ROUND_DURATION = 5 #seconds
 
   class << self
-    delegate :waiting_players, :player_data, :current_data,
+    delegate :waiting_players, :move_map, :current_data,
       :add_move, :new_player, to: :current_round
 
     def advance
@@ -37,17 +37,17 @@ class Round
     end
   end
 
-  attr_reader :participants, :waiting_players, :index, :player_data
+  attr_reader :participants, :waiting_players, :index, :move_map
 
   def initialize(father = nil)
     @waiting_players = []
     if father
       @index = father.index + 1
-      @player_data = father.player_data_with_new.dup
+      @move_map = father.move_map_with_new.dup
       @last_participants = father.participants
     else
       @index = 0
-      @player_data = {}
+      @move_map = {}
       @last_participants = Player.recent
     end
   end
@@ -57,15 +57,15 @@ class Round
   end
 
   def add_move(player, move = nil)
-    if player_data.key?(player.uuid)
+    if move_map.key?(player)
       raise ArgumentError, "Must provide move on subsequent turns" if move.nil?
-      player_data[player.uuid] = move
+      move_map[player] = move
     end
 
     player.touch
-    waiting_players << player.uuid
+    waiting_players << player
 
-    remaining_players = Set.new(participants.map(&:uuid)) - waiting_players
+    remaining_players = Set.new(participants) - waiting_players
     puts "remaining - #{remaining_players.inspect}"
 
     if remaining_players.present?
@@ -79,21 +79,23 @@ class Round
 
   def current_data
     {}.tap do |data|
-      data[:players] = recent_player_data
+      data[:players] = recent_move_map.reduce({}) {|a,(k,v)| a.merge(k.uuid => v) }
       data[:current_round] = index
     end
   end
 
-  def recent_player_data
+  def recent_move_map
     #TODO: cache this less painfully
     p = Set.new(participants.map(&:uuid))
-    prior_data = player_data_with_new.select {|k,v| p.include?(k) }
+    prior_data = move_map_with_new.select {|k,v| p.include?(k.uuid) }
   end
 
-  def player_data_with_new
-    p = Set.new(waiting_players)
-    new_data = (p - player_data.keys).reduce({}) {|a,e| a.merge(e => get_starting_move(e)) }
-    player_data.merge(new_data)
+  def move_map_with_new
+    waiting_and_new = Set.new(waiting_players) - move_map.keys
+
+    waiting_and_new.reduce(move_map.dup) do |a,e|
+      a.merge(e => get_starting_move(e.uuid))
+    end
   end
 
   def participants

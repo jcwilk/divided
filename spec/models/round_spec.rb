@@ -119,7 +119,7 @@ describe Round do
 
       it 'leaves only the new player as waiting' do
         add_move
-        expect(Round.waiting_players.to_a).to eql(['new-uuid'])
+        expect(Round.waiting_players.to_a.map(&:uuid)).to eql(['new-uuid'])
       end
 
       it 'includes both players in the recently moved list' do
@@ -159,7 +159,7 @@ describe Round do
         #NB: Must be a move the server will never choose
         Round.add_move(new_player,[1,1])
         finish do
-          expect(Round.player_data[new_uuid]).not_to eql([1,1])
+          expect(Round.current_round.recent_move_map[new_uuid]).not_to eql([1,1])
         end
       end
     end
