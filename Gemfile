@@ -27,6 +27,7 @@ end
 group :test do
   gem 'timecop'
   gem 'mock_em'
+  gem 'its'
 end
 
 

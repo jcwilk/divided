@@ -2,8 +2,8 @@ class Round
   ROUND_DURATION = 5 #seconds
 
   class << self
-    delegate :waiting_players, :player_data, :current_data, :add_move,
-      to: :current_round
+    delegate :waiting_players, :player_data, :current_data,
+      :add_move, :new_player, to: :current_round
 
     def advance
       current_round.complete
@@ -50,6 +50,10 @@ class Round
       @player_data = {}
       @last_participants = Player.recent
     end
+  end
+
+  def new_player
+    Player.new_active.tap {|p| add_move(p.uuid) }
   end
 
   def add_move(player_uuid, move = nil)

@@ -53,6 +53,18 @@ describe Round do
     end
   end
 
+  describe '.new_player' do
+    subject { Round.new_player }
+
+    it 'adds a new recent player' do
+      expect { subject }.to change { Player.recent.size }.by(1)
+    end
+
+    it 'returns a player with a uuid' do
+      expect(subject.uuid).to be_a(String)
+    end
+  end
+
   describe 'adding a move' do
     let(:new_uuid) { 'new-uuid' }
     let(:move) { [0,0] }

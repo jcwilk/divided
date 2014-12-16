@@ -12,9 +12,19 @@ class Player < Hashie::Dash
       recent.any? {|p| p.uuid == uuid }
     end
 
+    def get_by_uuid(uuid)
+      recent.find {|p| p.uuid == uuid }
+    end
+
     # def waiting
 
     # end
+
+    def new_active
+      new(uuid: SecureRandom.urlsafe_base64(8)).tap do |p|
+        all << p
+      end
+    end
 
     def mark_active(uuid)
       player = get_by_uuid(uuid)
@@ -34,15 +44,11 @@ class Player < Hashie::Dash
     def all
       @all ||= []
     end
-
-    def get_by_uuid(uuid)
-      recent.find {|p| p.uuid == uuid }
-    end
   end
 
   PLAYER_EXPIRE = 25 #seconds
 
-  property :uuid, required: true
+  property :uuid, required: false
 
   attr_reader :last_seen
 

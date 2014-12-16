@@ -10,6 +10,17 @@ describe Player do
     Player.recent_uuid?(uuid)
   end
 
+  describe '.new_active' do
+    subject { Player.new_active }
+
+    its(:uuid) { should be_a(String) }
+
+    it 'is included in the recent players' do
+      player = subject
+      expect(Player.recent).to include(player)
+    end
+  end
+
   describe 'marking a player as active' do
     def add_player
       Player.mark_active(uuid)
