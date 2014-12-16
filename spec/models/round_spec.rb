@@ -66,11 +66,12 @@ describe Round do
   end
 
   describe 'adding a move' do
+    let(:new_player) { Player.new_active(new_uuid) }
     let(:new_uuid) { 'new-uuid' }
     let(:move) { [0,0] }
 
-    def add_move(uuid = new_uuid)
-      Round.add_move(uuid,move)
+    def add_move(player = new_player)
+      Round.add_move(player,move)
     end
 
     def recent_players
@@ -109,7 +110,7 @@ describe Round do
 
     context 'after another player has recently moved' do
       before do
-        add_move('old-uuid')
+        add_move(Player.new_active('old-uuid'))
       end
 
       it 'does not advance the round' do
@@ -142,7 +143,7 @@ describe Round do
 
     context 'after another player has moved long ago' do
       before do
-        add_move('old-uuid')
+        add_move(Player.new_active('old-uuid'))
         Timecop.travel(Time.now+Player::PLAYER_EXPIRE*2)
       end
 
@@ -151,12 +152,12 @@ describe Round do
 
     context 'as a first move with recent players' do
       before do
-        add_move('old-uuid')
+        add_move(Player.new_active('old-uuid'))
       end
 
       it 'ignores their chosen position' do
         #NB: Must be a move the server will never choose
-        Round.add_move(new_uuid,[1,1])
+        Round.add_move(new_player,[1,1])
         finish do
           expect(Round.player_data[new_uuid]).not_to eql([1,1])
         end
@@ -167,7 +168,7 @@ describe Round do
       let(:move) { [-1,0] }
 
       before do
-        Round.add_move(new_uuid)
+        add_move
       end
 
       # it 'returns false' do
@@ -179,7 +180,7 @@ describe Round do
 
     context 'when choosing a spot more than 3 squares away from your previous spot' do
       before do
-        Round.add_move(new_uuid)
+        add_move
         @move = Round.current_data[:players][new_uuid].dup
         @move[0] = (@move[0]-9)*-1
         @move[1] = (@move[1]-9)*-1

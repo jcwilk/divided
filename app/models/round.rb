@@ -53,24 +53,24 @@ class Round
   end
 
   def new_player
-    Player.new_active.tap {|p| add_move(p.uuid) }
+    Player.new_active.tap {|p| add_move(p) }
   end
 
-  def add_move(player_uuid, move = nil)
-    if player_data.key?(player_uuid)
+  def add_move(player, move = nil)
+    if player_data.key?(player.uuid)
       raise ArgumentError, "Must provide move on subsequent turns" if move.nil?
-      player_data[player_uuid] = move
+      player_data[player.uuid] = move
     end
 
-    Player.mark_active(player_uuid)
-    waiting_players << player_uuid
+    player.touch
+    waiting_players << player.uuid
 
     remaining_players = Set.new(participants.map(&:uuid)) - waiting_players
     puts "remaining - #{remaining_players.inspect}"
 
     if remaining_players.present?
       puts 'peeps remaining!'
-      RoomEventsController.publish('/room_events/waiting', {player_uuid: player_uuid,current_round: index}.to_json)
+      RoomEventsController.publish('/room_events/waiting', {player_uuid: player.uuid,current_round: index}.to_json)
     else
       puts 'advancin'
       Round.advance

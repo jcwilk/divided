@@ -13,15 +13,17 @@ class Player < Hashie::Dash
     end
 
     def get_by_uuid(uuid)
-      recent.find {|p| p.uuid == uuid }
+      all.find {|p| p.uuid == uuid }
     end
 
     # def waiting
 
     # end
 
-    def new_active
-      new(uuid: SecureRandom.urlsafe_base64(8)).tap do |p|
+    def new_active(uuid = nil)
+      uuid ||= SecureRandom.urlsafe_base64(8)
+
+      new(uuid: uuid).tap do |p|
         all << p
       end
     end
