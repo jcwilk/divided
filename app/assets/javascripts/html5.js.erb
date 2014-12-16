@@ -239,6 +239,8 @@ $(function() {
           current_round: turnCount,
           player_uuid: player_uuid,
           next_pos: nextPos
+        }).fail(function(){
+          location.reload();
         });
       }
     }
