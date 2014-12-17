@@ -1,69 +1,13 @@
 require 'rails_helper'
 
-#TODO - something screwy going on with class stubbing
-# doing this for now
-module FakePublisher
-  class << self
-    def publish(*args) #channel, payload, [options]
-      published_messages << args
-    end
-
-    def published_messages
-      @published_messages ||= []
-    end
-
-    def reset
-      @published_messages = nil
-    end
-  end
-end
-
 describe Round do
+  include EMSpecRunner::Mixin
+
   before do
     Round.reset
   end
 
-  around(:each) do |example|
-    @explicit_finish = false
-    OLD_EM = EM
-    @logger = Logger.new(STDOUT)
-    EM = MockEM::MockEM.new(@logger, Timecop)
-    OLD_PUB = RoomEventsController
-    RoomEventsController = FakePublisher
-    FakePublisher.reset
-    begin
-      EM.run do
-        puts 'running'
-        example.run
-        finish if !@explicit_finish
-
-        EM.add_timer(10) do
-          fail "out of time!"
-        end
-      end
-    ensure
-      EM = OLD_EM
-      RoomEventsController = OLD_PUB
-      Timecop.return
-    end
-  end
-
-  def finish(&block)
-    @explicit_finish = true
-    EM.next_tick do
-      block.call if block
-      EM.stop
-    end
-  end
-
-  #TODO: this currently blocks tests until it finishes in realtime :'(
-  def finish_in(seconds, &block)
-    @explicit_finish = true
-    EM.add_timer(seconds) do
-      block.call if block
-      EM.stop
-    end
-  end
+  em_around
 
   describe '.new_player' do
     subject { Round.new_player }

@@ -16,24 +16,11 @@ class Player < Hashie::Dash
       all.find {|p| p.uuid == uuid }
     end
 
-    # def waiting
-
-    # end
-
     def new_active(uuid = nil)
       uuid ||= SecureRandom.urlsafe_base64(8)
 
       new(uuid: uuid).tap do |p|
         all << p
-      end
-    end
-
-    def mark_active(uuid)
-      player = get_by_uuid(uuid)
-      if player
-        player.touch
-      else
-        all << new(uuid: uuid)
       end
     end
 

@@ -85,4 +85,5 @@ RSpec.configure do |config|
 
   require 'pry'
   require 'its'
+  require 'em_spec_runner'
 end

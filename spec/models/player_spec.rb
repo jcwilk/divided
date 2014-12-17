@@ -10,6 +10,10 @@ describe Player do
     Player.recent_uuid?(uuid)
   end
 
+  before do
+    Timecop.return
+  end
+
   describe '.new_active' do
     subject { Player.new_active }
 
@@ -19,35 +23,27 @@ describe Player do
       player = subject
       expect(Player.recent).to include(player)
     end
+
+    it 'is not included in recent players after sufficient time' do
+      subject
+      expect { Timecop.travel(Time.now+Player::PLAYER_EXPIRE+1) }
+        .to change { Player.recent_uuid?(subject.uuid) }.to(false)
+    end
   end
 
-  describe 'marking a player as active' do
-    def add_player
-      Player.mark_active(uuid)
+  describe '#touch' do
+    before do
+      @player = Player.new_active
     end
 
-    it 'adds the player to the recent players list' do
-      expect { add_player }.to change { recent_player? }.to(true)
-    end
-
-    context 'if the player is already active' do
+    context 'when a player has become stale' do
       before do
-        add_player
+        Timecop.travel(Time.now+Player::PLAYER_EXPIRE+1)
       end
 
-      it 'does not add a duplicate' do
-        expect { add_player }.not_to change { Player.recent }
-      end
-    end
-
-    context 'and then letting the expiry time pass' do
-      before do
-        add_player
-      end
-
-      it 'no longer includes the player as recent' do
-        expect { Timecop.travel(Time.now+Player::PLAYER_EXPIRE+1) }
-          .to change { recent_player? }.to(false)
+      it 'refreshes them and returns them into recent players' do
+        expect { @player.touch }.to change { Player.recent.include?(@player) }
+          .to(true)
       end
     end
   end
