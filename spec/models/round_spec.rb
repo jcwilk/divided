@@ -2,8 +2,19 @@ require 'rails_helper'
 
 #TODO - something screwy going on with class stubbing
 # doing this for now
-class FakePublisher
-  def self.publish(channel, payload, optional = 'dunno?')
+module FakePublisher
+  class << self
+    def publish(*args) #channel, payload, [options]
+      published_messages << args
+    end
+
+    def published_messages
+      @published_messages ||= []
+    end
+
+    def reset
+      @published_messages = nil
+    end
   end
 end
 
@@ -19,6 +30,7 @@ describe Round do
     EM = MockEM::MockEM.new(@logger, Timecop)
     OLD_PUB = RoomEventsController
     RoomEventsController = FakePublisher
+    FakePublisher.reset
     begin
       EM.run do
         puts 'running'

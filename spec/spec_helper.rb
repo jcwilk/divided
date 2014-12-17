@@ -84,4 +84,5 @@ RSpec.configure do |config|
 =end
 
   require 'pry'
+  require 'its'
 end
