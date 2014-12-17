@@ -37,10 +37,10 @@ class Round
     end
   end
 
-  attr_reader :participants, :waiting_players, :index, :move_map
+  attr_reader :participants, :waiting_map, :index, :move_map
 
   def initialize(father = nil)
-    @waiting_players = []
+    @waiting_map = {}
     if father
       @index = father.index + 1
       @move_map = father.move_map_with_new.dup
@@ -59,11 +59,15 @@ class Round
   def add_move(player, move = nil)
     if move_map.key?(player)
       raise ArgumentError, "Must provide move on subsequent turns" if move.nil?
-      move_map[player] = move
+      if !valid_move?(player,move)
+        return false
+      end
+    else
+      move = get_starting_move(player.uuid)
     end
 
     player.touch
-    waiting_players << player
+    waiting_map[player] = move
 
     remaining_players = Set.new(participants) - waiting_players
     puts "remaining - #{remaining_players.inspect}"
@@ -75,6 +79,12 @@ class Round
       puts 'advancin'
       Round.advance
     end
+
+    true
+  end
+
+  def waiting_players
+    Set.new(waiting_map.keys)
   end
 
   def current_data
@@ -91,11 +101,7 @@ class Round
   end
 
   def move_map_with_new
-    waiting_and_new = Set.new(waiting_players) - move_map.keys
-
-    waiting_and_new.reduce(move_map.dup) do |a,e|
-      a.merge(e => get_starting_move(e.uuid))
-    end
+    move_map.merge(waiting_map)
   end
 
   def participants
@@ -117,6 +123,14 @@ class Round
   end
 
   private
+
+  def valid_move?(player,move)
+    last_move = move_map[player]
+    return false if last_move.nil?
+    return false if move[0] < 0 || move[0] > 9 || move[1] < 0 || move[1] > 9
+
+    [(move[0]-last_move[0]).abs,(move[1]-last_move[1]).abs].max < 4
+  end
 
   def get_starting_move(uuid)
     [

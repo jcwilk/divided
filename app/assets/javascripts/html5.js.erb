@@ -234,13 +234,21 @@ $(function() {
 
         console.log('post!');
 
-        //TODO: retry
-        $.post('/turns', {
-          current_round: turnCount,
-          player_uuid: player_uuid,
-          next_pos: nextPos
-        }).fail(function(){
-          location.reload();
+        $.ajax('/turns', {
+          type: "POST",
+          data: {
+            current_round: turnCount,
+            player_uuid: player_uuid,
+            next_pos: nextPos
+          },
+          statusCode: {
+            422: function (response) {
+               game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
+            },
+            500: function (response) {
+               location.reload();
+            }
+          }
         });
       }
     }
