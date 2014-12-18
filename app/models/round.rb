@@ -37,7 +37,7 @@ class Round
     end
   end
 
-  attr_reader :participants, :waiting_map, :index, :move_map
+  attr_reader :waiting_map, :index, :move_map
 
   def initialize(father = nil)
     @waiting_map = {}
