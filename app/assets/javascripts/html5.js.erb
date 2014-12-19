@@ -247,6 +247,9 @@ $(function() {
             },
             500: function (response) {
                location.reload();
+            },
+            403: function (response) {
+              location.reload();
             }
           }
         });

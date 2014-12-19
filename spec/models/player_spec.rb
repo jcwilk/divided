@@ -12,6 +12,7 @@ describe Player do
 
   before do
     Timecop.return
+    Player.reset
   end
 
   describe '.new_active' do
@@ -32,9 +33,7 @@ describe Player do
   end
 
   describe '#touch' do
-    before do
-      @player = Player.new_active
-    end
+    let!(:player) { Player.new_active }
 
     context 'when a player has become stale' do
       before do
@@ -42,9 +41,25 @@ describe Player do
       end
 
       it 'refreshes them and returns them into recent players' do
-        expect { @player.touch }.to change { Player.recent.include?(@player) }
+        expect { player.touch }.to change { Player.recent.include?(player) }
           .to(true)
       end
+    end
+  end
+
+  describe '#kill' do
+    let!(:player) { Player.new_active }
+
+    def kill
+      player.kill
+    end
+
+    it 'takes them out of the recent list' do
+      expect { kill }.to change { Player.recent.include?(player) }.from(true).to(false)
+    end
+
+    it 'makes them not alive' do
+      expect { kill }.to change { player.alive? }.from(true).to(false)
     end
   end
 end

@@ -83,6 +83,15 @@ class Round
     true
   end
 
+  def killed_players
+    mm = move_map_with_new
+    mm.select do |player,move|
+      mm.any? do |p,m|
+        p != player && (move[0]-m[0]).abs <= 1 && (move[1]-m[1]).abs <= 1
+      end
+    end.keys
+  end
+
   def waiting_players
     Set.new(waiting_map.keys)
   end
@@ -90,6 +99,7 @@ class Round
   def current_data
     {}.tap do |data|
       data[:players] = recent_move_map.reduce({}) {|a,(k,v)| a.merge(k.uuid => v) }
+      data[:killed] = killed_players.map(&:uuid)
       data[:current_round] = index
     end
   end
@@ -119,6 +129,7 @@ class Round
 
   def complete
     @participants = participants
+    killed_players.each(&:kill)
     RoomEventsController.publish('/room_events/advance', current_data.to_json)
   end
 
