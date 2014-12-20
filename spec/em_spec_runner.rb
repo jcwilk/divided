@@ -66,10 +66,6 @@ class EMSpecRunner
         puts 'running'
         block.call(self)
         finish if !@explicit_finish
-
-        EM.add_timer(10) do
-          fail "out of time!"
-        end
       end
     ensure
       Object.send(:remove_const, :EM)

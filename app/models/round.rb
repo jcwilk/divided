@@ -30,6 +30,12 @@ class Round
       current_round.index
     end
 
+    #hack for starting positions
+    def next_participant_counter
+      @participant_counter ||= 0
+      @participant_counter+= 1
+    end
+
     private
 
     def all
@@ -43,7 +49,7 @@ class Round
     @waiting_map = {}
     if father
       @index = father.index + 1
-      @move_map = father.living_move_map_with_new.dup
+      @move_map = father.living_recent_move_map.dup
       @last_participants = father.participants
     else
       @index = 0
@@ -63,7 +69,7 @@ class Round
         return false
       end
     else
-      move = get_starting_move(player.uuid)
+      move = get_starting_move
     end
 
     player.touch
@@ -89,7 +95,7 @@ class Round
       mm.any? do |p,m|
         p != player && (move[0]-m[0]).abs <= 1 && (move[1]-m[1]).abs <= 1
       end
-    end.keys
+    end.keys | (move_map.keys - participants)
   end
 
   def waiting_players
@@ -104,18 +110,18 @@ class Round
     end
   end
 
+  def living_recent_move_map
+    recent_move_map.select {|k,v| !killed_players.include?(k) }
+  end
+
   def recent_move_map
     #TODO: cache this less painfully
     p = Set.new(participants.map(&:uuid))
-    prior_data = move_map_with_new.select {|k,v| p.include?(k.uuid) }
+    move_map_with_new.select {|k,v| p.include?(k.uuid) }
   end
 
   def move_map_with_new
     move_map.merge(waiting_map)
-  end
-
-  def living_move_map_with_new
-    move_map_with_new.select {|k,v| !killed_players.include?(k) }
   end
 
   def participants
@@ -147,10 +153,11 @@ class Round
     [(move[0]-last_move[0]).abs,(move[1]-last_move[1]).abs].max < 4
   end
 
-  def get_starting_move(uuid)
+  def get_starting_move
+    counter = self.class.next_participant_counter
     [
-      (Digest.hexencode(uuid).to_i(16)/13%2)*9,
-      (Digest.hexencode(uuid).to_i(16)/7%2)*9
+      (counter % 2)*9,
+      ((counter/2) %2)*9
     ]
   end
 end

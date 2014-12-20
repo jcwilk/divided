@@ -17,8 +17,12 @@ describe TurnsController do
     post :create, player_uuid: @player.uuid, next_pos: m
   end
 
+  def published_advances
+    published_messages.select{|m| m[0] == '/room_events/advance'}
+  end
+
   def last_published_round
-    json = published_messages.select{|m| m[0] == '/room_events/advance'}.last[1]
+    json = published_advances.last[1]
     json ? Hashie::Mash.new(JSON.parse(json)) : nil
   end
 
@@ -46,6 +50,23 @@ describe TurnsController do
     move(-1,0)
     expect(response.status).to eql(422)
     expect(last_published_player_move).not_to eql([-1,0])
+  end
+
+  context 'if the player takes no action for more than the expiry time' do
+    def wait_too_long(&block)
+      finish_in(Player::PLAYER_EXPIRE*2) do
+        block.call
+      end
+    end
+
+    it 'kills the player' do
+      wait_too_long do
+        kill = published_advances.find do |pub|
+          JSON.parse(pub[1])['killed'].include?(@player.uuid)
+        end
+        expect(kill).to be_present
+      end
+    end
   end
 
   context 'after two players have moved next to each other' do

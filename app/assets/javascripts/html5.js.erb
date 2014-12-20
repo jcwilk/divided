@@ -212,6 +212,8 @@ $(function() {
         }).list, function(i,soul) {
           soul.animations.stop();
           soul.frame = 40;
+          markAsWaiting(soul.uuid);
+          delete playerPosMap[soul.uuid];
         });
       });
     },
