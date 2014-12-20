@@ -119,34 +119,5 @@ describe Round do
         end
       end
     end
-
-    context 'when choosing a spot out of the grid' do
-      let(:move) { [-1,0] }
-
-      before do
-        add_move
-      end
-
-      # it 'returns false' do
-      #   finish_in(5.1) do
-      #     expect(Round.add_move(new_uuid,move)).to be_false
-      #   end
-      # end
-    end
-
-    context 'when choosing a spot more than 3 squares away from your previous spot' do
-      before do
-        add_move
-        @move = Round.current_data[:players][new_uuid].dup
-        @move[0] = (@move[0]-9)*-1
-        @move[1] = (@move[1]-9)*-1
-      end
-
-      # it 'returns false' do
-      #   finish_in(5.1) do
-      #     expect(Round.add_move(new_uuid,@move)).to be_false
-      #   end
-      # end
-    end
   end
 end

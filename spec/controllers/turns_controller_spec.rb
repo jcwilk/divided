@@ -84,24 +84,27 @@ describe TurnsController do
       expect(last_published_move).to eql(@player.uuid => [3,3], @p2.uuid => [2,2])
     end
 
-    it 'reports them as killed' do
-      expect(last_published_round['killed'].sort).to eql([@player.uuid,@p2.uuid].sort)
+    it 'reports only the player who moved more as killed' do
+      expect(last_published_round['killed']).to eql([@p2.uuid])
     end
 
-    it 'does not permit further moves from the players' do
-      move(3,3)
+    it 'does not permit further moves from the dead player' do
+      post :create, player_uuid: @p2.uuid, next_pos: [2,2]
       expect(response.status).to eql(403)
     end
 
-    it 'reverts to single player mode for new players' do
-      p3 = Round.new_player
-      expect(last_published_move.keys).to include(p3.uuid)
+    it 'reverts to single player mode for the living player' do
+      published_messages.clear
+      move(4,4)
+      expect(last_published_move.keys).to include(@player.uuid)
     end
 
-    it 'they will not kill players in future rounds' do
+    it 'the dead player will not kill players in future rounds' do
       p3 = Round.new_player
-      post :create, player_uuid: p3.uuid, next_pos: [2,2]
-      expect(Player.alive_by_uuid(p3.uuid)).not_to be_nil
+      finish_in(6) do
+        post :create, player_uuid: p3.uuid, next_pos: [1,1]
+        expect(Player.alive_by_uuid(p3.uuid)).not_to be_nil
+      end
     end
   end
 end

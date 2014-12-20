@@ -184,6 +184,7 @@ $(function() {
             numOfPlayers++;
           }
         }
+        numOfPlayers-= data.killed.length;
 
         $.each(data.players, function(uuid,pos) {
           playerPosMap[uuid] = pos;

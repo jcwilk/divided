@@ -50,12 +50,11 @@ class Round
     if father
       @index = father.index + 1
       @move_map = father.living_recent_move_map.dup
-      @last_participants = father.participants
     else
       @index = 0
       @move_map = {}
-      @last_participants = Player.recent
     end
+    @last_move_map = move_map.dup
   end
 
   def new_player
@@ -93,7 +92,10 @@ class Round
     mm = move_map_with_new
     mm.select do |player,move|
       mm.any? do |p,m|
-        p != player && (move[0]-m[0]).abs <= 1 && (move[1]-m[1]).abs <= 1
+        p != player &&
+          (move[0]-m[0]).abs <= 1 &&
+          (move[1]-m[1]).abs <= 1 &&
+          distance_moved(player) > distance_moved(p)
       end
     end.keys | (move_map.keys - participants)
   end
@@ -144,6 +146,18 @@ class Round
   end
 
   private
+
+  def last_move_map
+    @last_move_map
+  end
+
+  def distance_moved(player)
+    old = last_move_map[player]
+    nu = recent_move_map[player]
+    return 0 if old.nil? || nu.nil?
+
+    [(old[0]-nu[0]).abs,(old[1]-nu[1]).abs].max
+  end
 
   def valid_move?(player,move)
     last_move = move_map[player]
