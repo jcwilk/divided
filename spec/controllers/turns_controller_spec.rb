@@ -52,7 +52,7 @@ describe TurnsController do
     expect(last_published_player_move).not_to eql([-1,0])
   end
 
-  context 'if the player takes no action for more than the expiry time' do
+  context 'if the player stays in place for more than the expiry time' do
     def wait_too_long(&block)
       finish_in(Player::PLAYER_EXPIRE*2) do
         block.call
@@ -60,6 +60,11 @@ describe TurnsController do
     end
 
     it 'kills the player' do
+      proc = Proc.new do
+        move(0,0)
+        EM.add_timer(3,&proc)
+      end
+      EM.add_timer(3,&proc)
       wait_too_long do
         kill = published_advances.find do |pub|
           JSON.parse(pub[1])['killed'].include?(@player.uuid)

@@ -71,8 +71,8 @@ class Round
       move = get_starting_move
     end
 
-    player.touch
     waiting_map[player] = move
+    player.touch if distance_moved(player) > 0
 
     remaining_players = Set.new(participants) - waiting_players
     puts "remaining - #{remaining_players.inspect}"
