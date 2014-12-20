@@ -43,7 +43,7 @@ class Round
     @waiting_map = {}
     if father
       @index = father.index + 1
-      @move_map = father.move_map_with_new.dup
+      @move_map = father.living_move_map_with_new.dup
       @last_participants = father.participants
     else
       @index = 0
@@ -112,6 +112,10 @@ class Round
 
   def move_map_with_new
     move_map.merge(waiting_map)
+  end
+
+  def living_move_map_with_new
+    move_map_with_new.select {|k,v| !killed_players.include?(k) }
   end
 
   def participants

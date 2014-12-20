@@ -51,8 +51,7 @@ $(function() {
   var faye = new Faye.Client('/faye');
 
   var player;
-  var currentPos = JSON.parse(first_move);
-  console.log(currentPos);
+  console.log(first_move);
   var souls;
   var isPointerDown = false;
   var waitingIcons;
@@ -60,13 +59,17 @@ $(function() {
   var FACE_WIDTH = 30;
   var FACE_HEIGHT = 32;
 
-  var newWaitingDoom = function(xPos,yPos){
+  var newWaitingDoom = function(xPos,yPos,uuid){
     var doom = game.add.sprite(
       xPosToX(xPos)-FACE_WIDTH/2, yPosToY(yPos)-FACE_HEIGHT/2, 'doomfaces'
     );
 
     doom.animations.add('waiting',[4,4,4,4,4,4,3,5],2,true);
     doom.animations.play('waiting');
+
+    souls.add(doom);
+    doom.currentPos = [xPos,yPos];
+    doom.uuid = uuid;
 
     return doom;
   }
@@ -90,15 +93,15 @@ $(function() {
       walls.add(game.add.tileSprite(600,100,40,400,'slate_flooring_40x40'));
       floor = game.add.tileSprite(200,100,400,400,'2x2brown40x40');
 
-      player = newWaitingDoom(currentPos[0],currentPos[1]);
+      souls = game.add.group();
+      livingSouls = game.add.group();
+      waitingIcons = game.add.group();
+
+      player = newWaitingDoom(first_move[0],first_move[1],player_uuid);
 
       player.blip = game.add.sprite(14.5,-5,'player_blip',false);
       player.blip.anchor.setTo(0.5);
       player.addChild(player.blip);
-
-      souls = game.add.group();
-
-      waitingIcons = game.add.group();
 
       var waitingMap = {}
       var markAsChoosing = function(uuid) {
@@ -144,7 +147,20 @@ $(function() {
         }
       });
 
-      var moveSprite = function(sprite,cPos,nPos) {
+      var moveSprite = function(sprite,nPos) {
+        var cPos = sprite.currentPos;
+        if (nPos[0] < cPos[0]) {
+          sprite.animations.stop();
+          sprite.animations.frame = 6;
+        }
+        else if (nPos[0] > cPos[0]) {
+          sprite.animations.stop();
+          sprite.animations.frame = 7;
+        }
+        else {
+          sprite.animations.play('waiting');
+        }
+
         cPos[0] = nPos[0];
         cPos[1] = nPos[1];
 
@@ -154,67 +170,48 @@ $(function() {
         }, sliderContainer.animationDuration, Phaser.Easing.Cubic.InOut, true);
       }
 
-      var isClose = function(soulPos){
-        return Math.abs(soulPos[0]-currentPos[0]) <= 1 && Math.abs(soulPos[1]-currentPos[1]) <= 1;
-      }
-
       faye.subscribe('/room_events/advance', function(payload) {
         console.log('advance! '+payload);
         var data = JSON.parse(payload);
 
-        //TODO: check round
-
-
-        $.each(waitingMap, function(uuid,_){
+        $.each(waitingMap, function(uuid,_) {
           markAsWaiting(uuid);
         });
 
         var numOfPlayers = 0;
-        for (k in data.players) if (data.players.hasOwnProperty(k)) numOfPlayers++;
+        for (k in data.players) {
+          if (data.players.hasOwnProperty(k)) {
+            numOfPlayers++;
+          }
+        }
 
-        $.each(data.players, function(uuid,pos){
+        $.each(data.players, function(uuid,pos) {
           playerPosMap[uuid] = pos;
           console.log(data.players);
-          if (numOfPlayers > 1) markAsChoosing(uuid);
         });
         console.log('new pos map - '+JSON.stringify(playerPosMap))
         turnCount = data.current_round+1;
 
-        var playerPos = playerPosMap[player_uuid] || currentPos;
-
-        if (playerPos[0] < currentPos[0]) {
-          player.animations.stop();
-          player.animations.frame = 6;
-        }
-        else if (playerPos[0] > currentPos[0]) {
-          player.animations.stop();
-          player.animations.frame = 7;
-        }
-        else {
-          player.animations.play('waiting');
-        }
-
-        moveSprite(player,currentPos,playerPos);
-
-        $.each(playerPosMap, function(uuid, soulData){
-          if(uuid == player_uuid) return;
-
-          var soul = souls.filter(function(s,i,group){return s.uuid == uuid}).first;
+        $.each(playerPosMap, function(uuid, soulData) {
+          var soul = souls.filter(function(s,i,group) {
+              return s.alive && s.uuid == uuid
+            }).first;
           if(soul){
-            moveSprite(soul,soul.currentPos,soulData);
+            moveSprite(soul,soulData);
           } else {
-            soul = newWaitingDoom(soulData[0],soulData[1]);
-            souls.add(soul);
-            soul.currentPos = soulData;
-            soul.uuid = uuid;
+            newWaitingDoom(soulData[0],soulData[1],uuid);
           }
 
-          soul.animations.stop();
-          if(isClose(soul.currentPos)) {
-            soul.animations.frame = 40;
-          } else {
-            soul.animations.play('waiting');
+          if(numOfPlayers > 1 && data.players.hasOwnProperty(uuid)) {
+            markAsChoosing(uuid);
           }
+        });
+
+        $.each(souls.filter(function(s,i,group) {
+          return $.inArray(s.uuid,data.killed) > -1
+        }).list, function(i,soul) {
+          soul.animations.stop();
+          soul.frame = 40;
         });
       });
     },

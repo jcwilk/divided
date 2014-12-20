@@ -71,5 +71,16 @@ describe TurnsController do
       move(3,3)
       expect(response.status).to eql(403)
     end
+
+    it 'reverts to single player mode for new players' do
+      p3 = Round.new_player
+      expect(last_published_move.keys).to include(p3.uuid)
+    end
+
+    it 'they will not kill players in future rounds' do
+      p3 = Round.new_player
+      post :create, player_uuid: p3.uuid, next_pos: [2,2]
+      expect(Player.alive_by_uuid(p3.uuid)).not_to be_nil
+    end
   end
 end
