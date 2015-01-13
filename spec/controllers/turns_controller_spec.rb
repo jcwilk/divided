@@ -1,12 +1,9 @@
 require 'rails_helper'
 
 describe TurnsController do
-  include EMSpecRunner::Mixin
-
   let(:starting_move) { [0,0] }
 
   before do
-    Round.reset
     allow_any_instance_of(Round).to receive(:get_starting_move).and_return(starting_move)
     @player = Round.new_player
   end
@@ -15,15 +12,6 @@ describe TurnsController do
 
   def move(*m)
     post :create, player_uuid: @player.uuid, next_pos: m
-  end
-
-  def published_advances
-    published_messages.select{|m| m[0] == '/room_events/advance'}
-  end
-
-  def last_published_round
-    json = published_advances.last[1]
-    json ? Hashie::Mash.new(JSON.parse(json)) : nil
   end
 
   def last_published_move

@@ -10,7 +10,10 @@ module DV
       present self, with: DV::Representers::Root
     end
 
-    mount DV::Turns
+    mount DV::CurrentRound
+    mount DV::Round
+    mount DV::Rooms
+    mount DV::Room
 
     add_swagger_documentation api_version: 'v1'
   end

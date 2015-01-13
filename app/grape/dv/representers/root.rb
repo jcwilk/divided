@@ -7,8 +7,8 @@ module DV
         build_url(opts,'/dv')
       end
 
-      link 'sc:turns' do |opts|
-        build_url(opts,'/dv/turns')
+      link 'dv:rooms' do |opts|
+        build_url(opts,'/dv/rooms')
       end
 
       link :swagger_doc do |opts|
