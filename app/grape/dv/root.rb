@@ -11,9 +11,12 @@ module DV
     end
 
     mount DV::CurrentRound
-    mount DV::Round
-    mount DV::Rooms
+    mount DV::Move
+    mount DV::Moves
+    mount DV::Participant
     mount DV::Room
+    mount DV::Rooms
+    mount DV::Round
 
     add_swagger_documentation api_version: 'v1'
   end

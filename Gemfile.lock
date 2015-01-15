@@ -121,6 +121,7 @@ GEM
       uri_template (>= 0.5.2)
     i18n (0.6.11)
     ice_nine (0.11.1)
+    interception (0.5)
     its (0.2.0)
       rspec-core
     jquery-rails (3.1.2)
@@ -148,6 +149,9 @@ GEM
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)
+    pry-rescue (1.4.1)
+      interception (>= 0.5)
+      pry
     rack (1.5.2)
     rack-accept (0.4.5)
       rack (>= 0.4)
@@ -262,6 +266,7 @@ DEPENDENCIES
   mock_em
   momentjs-rails
   pry
+  pry-rescue
   rack-test (~> 0.6.2)
   rails (= 4.1.4)
   rails_12factor

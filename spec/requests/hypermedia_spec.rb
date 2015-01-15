@@ -50,8 +50,9 @@ describe 'divided hypermedia' do
     end
 
     it 'provides a list of available moves' do
-      pending
-      expect(subject.size).to be > 3
+      finish_in(Round::ROUND_DURATION+1) do
+        expect(subject.count).to be > 3
+      end
     end
   end
 end

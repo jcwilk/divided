@@ -27,8 +27,13 @@ module DV
       end
 
       def base_url(opts)
-        request = Grape::Request.new(opts[:env])
-        request.base_url
+        if opts[:env].present?
+          request = Grape::Request.new(opts[:env])
+          request.base_url
+        else
+          puts "Warning! Unable to get hostname"
+          "http://missing.example.com"
+        end
       end
     end
   end

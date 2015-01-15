@@ -24,6 +24,7 @@ end
 
 group :development, :test do
   gem 'pry'
+  gem 'pry-rescue'
   gem 'rspec-rails', '~> 3.1.0'
   gem 'spring'
   gem "spring-commands-rspec"

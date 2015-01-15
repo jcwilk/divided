@@ -60,12 +60,18 @@ class Player < Hashie::Dash
     @alive
   end
 
-  # class CollectionRepresenter < Roar::Decorator
-  #   include Roar::JSON
+  def moves
+    (0..3).map do |id|
+      Hashie::Mash.new({
+        id: id,
+        x: 1,
+        y: 1,
+        participant_uuid: uuid
+      })
+    end
+  end
 
-  #   collection :players, extend: Player::Representer, class: Player
-  # end
-
+  #TODO: remove this
   module Representer
     include Roar::JSON
 

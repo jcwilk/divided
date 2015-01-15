@@ -12,10 +12,6 @@ module DV
       link 'dv:current_round' do |opts|
         build_url(opts,"/dv/current_round")
       end
-
-      link 'dv:root' do |opts|
-        build_url(opts,'/dv')
-      end
     end
   end
 end

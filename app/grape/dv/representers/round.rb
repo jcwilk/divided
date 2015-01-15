@@ -9,9 +9,7 @@ module DV
         build_url(opts,"/dv/round/#{index}")
       end
 
-      link 'dv:root' do |opts|
-        build_url(opts,'/dv')
-      end
+      collection :participants, extend: DV::Representers::Participant, as: :participants, embedded: true
     end
   end
 end
