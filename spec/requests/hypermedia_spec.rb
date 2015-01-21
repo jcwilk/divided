@@ -45,14 +45,22 @@ describe 'divided hypermedia' do
       Timecop.travel(Time.now+Round::ROUND_DURATION+1)
     end
 
-    subject do
+    def available_moves
       current_round.participants.find {|p| p.uuid == @player.uuid }.moves
+    end
+
+    subject do
+      available_moves
     end
 
     it 'provides a list of available moves' do
       finish_in(Round::ROUND_DURATION+1) do
         expect(subject.count).to be > 3
       end
+    end
+
+    context 'and submitting one of them' do
+      it 'advances the round'
     end
   end
 end

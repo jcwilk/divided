@@ -60,17 +60,6 @@ class Player < Hashie::Dash
     @alive
   end
 
-  def moves
-    (0..3).map do |id|
-      Hashie::Mash.new({
-        id: id,
-        x: 1,
-        y: 1,
-        participant_uuid: uuid
-      })
-    end
-  end
-
   #TODO: remove this
   module Representer
     include Roar::JSON

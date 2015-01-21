@@ -7,9 +7,13 @@ module DV
       requires :id, type: String, desc: 'Participant uuid.'
     end
     get '/participant/:id/moves' do
-      participant = Player.alive_by_uuid(params[:id])
+      player = Player.alive_by_uuid(params[:id])
+      if player
+        participant = ::Participant.from_player(player: player)
+      end
+
       if participant.present?
-        present participant.moves, with: DV::Representers::Moves
+        present participant.current_moves, with: DV::Representers::Moves
       else
         render nothing: true, status: 404
       end
