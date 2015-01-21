@@ -1,6 +1,6 @@
 module DV
   module Representers
-    module Room
+    class Room < Grape::Roar::Decorator
       include DV::Representers::Base
 
       property :id

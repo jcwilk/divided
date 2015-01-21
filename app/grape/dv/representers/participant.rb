@@ -1,6 +1,6 @@
 module DV
   module Representers
-    module Participant
+    class Participant < Grape::Roar::Decorator
       include DV::Representers::Base
 
       property :uuid

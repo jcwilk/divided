@@ -15,3 +15,6 @@
 //= require jquery-ui-1.10.4.custom.min
 //= require moment
 //= require faye
+//= require URI
+//= require q
+//= require hyperagent

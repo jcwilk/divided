@@ -1,6 +1,6 @@
 module DV
   module Representers
-    module Round
+    class Round < Grape::Roar::Decorator
       include DV::Representers::Base
 
       property :index

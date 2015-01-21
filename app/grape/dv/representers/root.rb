@@ -1,6 +1,6 @@
 module DV
   module Representers
-    module Root
+    class Root < Grape::Roar::Decorator
       include DV::Representers::Base
 
       link :self do |opts|

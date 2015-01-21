@@ -1,6 +1,6 @@
 module DV
   module Representers
-    module Move
+    class Move < Grape::Roar::Decorator
       include DV::Representers::Base
 
       property :x

@@ -111,6 +111,7 @@ class Round
       data[:players] = recent_move_map.reduce({}) {|a,(k,v)| a.merge(k.uuid => v) }
       data[:killed] = killed_players.map(&:uuid)
       data[:current_round] = index
+      data[:halRound] = DV::Representers::Round.render_hash(self)
     end
   end
 

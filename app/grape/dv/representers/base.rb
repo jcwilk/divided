@@ -3,10 +3,22 @@ require 'roar/json/hal'
 module DV
   module Representers
     module Base
+      module ClassMethods
+        def render(obj)
+          new(obj).to_json(env: {
+            "rack.url_scheme" => 'http',
+            "HTTP_HOST" => Divided::CANONICAL_HOST
+          })
+        end
+
+        def render_hash(*args)
+          JSON.parse(render(*args))
+        end
+      end
+
       def self.included(klass)
         klass.instance_eval do
           include Roar::JSON::HAL
-          include Grape::Roar::Representer
 
           curies do |opts|
             [
@@ -16,9 +28,22 @@ module DV
             ]
           end
         end
+        klass.extend(ClassMethods)
       end
 
       private
+
+      def method_missing(*args)
+        if represented.respond_to?(args.first)
+          represented.send(*args)
+        else
+          super
+        end
+      end
+
+      def respond_to?(*args)
+        super || represented.respond_to?(*args)
+      end
 
       def build_url(opts, path)
         URI.parse(base_url(opts)).tap do |uri|

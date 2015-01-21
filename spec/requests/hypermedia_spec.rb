@@ -27,6 +27,20 @@ describe 'divided hypermedia' do
     first_room.dv_current_round
   end
 
+  describe 'utlities' do
+    describe 'rendering an object' do
+      subject { DV::Representers::Round.render(Round.current_round) }
+
+      it 'returns a JSON hash' do
+        expect(JSON.parse(subject).class).to eql(Hash)
+      end
+
+      it 'includes the canonical hostname' do
+        expect(subject.include?(Divided::CANONICAL_HOST)).to eql(true)
+      end
+    end
+  end
+
   context 'retrieving the current round data for a room' do
     subject do
       current_round
