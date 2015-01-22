@@ -16,7 +16,10 @@ Because this is at least 50% a fun experiment, it's fairly unique in its archite
 * [Faye](http://faye.jcoglan.com/architecture.html) for same-process persistent connections (thanks to @jamesotron for his excellent [faye-rails](https://github.com/jamesotron/faye-rails))
   * If you look in the git history I just built off of his faye-rails-example :P
 * [Thin](http://code.macournoyer.com/thin/usage/)/[EventMachine](https://www.igvita.com/2008/05/27/ruby-eventmachine-the-speed-demon/) for evented awesomeness obviating the need for a background worker
-* [Grape](https://github.com/intridea/grape/wiki) (eventually) for concise and dynamic hypermedia APIs (specifically, most likely, [HAL](http://haltalk.herokuapp.com/explorer/browser.html#/))
+* [Grape](https://github.com/intridea/grape/wiki) (in progress) for a concise and dynamic hypermedia API
+  * [HAL](http://haltalk.herokuapp.com/explorer/browser.html#/) JSON hypermedia specification of choice
+  * [hyperagent](http://weluse.github.io/hyperagent/) for the javascript client
+  * [hyperresource](https://github.com/gamache/hyperresource) for the ruby client (currently only used for testing the API)
 * [RSpec](http://www.rubydoc.info/gems/rspec-expectations/frames) for test love since all of the above test so nicely
   * Not sure about how well Faye will test, but pub/sub is fairly easy to fudge over in tests (so far, fudging over entirely)
   * Using [mock_em](https://github.com/rightscale/mock_em) to quickly test time-based scenarios
