@@ -29,8 +29,14 @@ GEM
       tzinfo (~> 1.1)
     addressable (2.3.6)
     arel (5.0.1.20140414130214)
+    axiom-types (0.1.1)
+      descendants_tracker (~> 0.0.4)
+      ice_nine (~> 0.11.0)
+      thread_safe (~> 0.3, >= 0.3.1)
     builder (3.2.2)
     coderay (1.1.0)
+    coercible (1.0.0)
+      descendants_tracker (~> 0.0.1)
     coffee-rails (4.0.1)
       coffee-script (>= 2.2.0)
       railties (>= 4.0.0, < 5.0)
@@ -40,6 +46,8 @@ GEM
     coffee-script-source (1.8.0)
     cookiejar (0.3.2)
     daemons (1.1.9)
+    descendants_tracker (0.0.4)
+      thread_safe (~> 0.3, >= 0.3.1)
     diff-lcs (1.2.5)
     em-http-request (1.1.2)
       addressable (>= 2.3.4)
@@ -49,9 +57,12 @@ GEM
       http_parser.rb (>= 0.6.0)
     em-socksify (0.3.0)
       eventmachine (>= 1.0.0.beta.4)
+    equalizer (0.0.9)
     erubis (2.7.0)
     eventmachine (1.0.3)
     execjs (2.2.2)
+    faraday (0.9.0)
+      multipart-post (>= 1.2, < 3)
     faye (1.0.3)
       cookiejar (>= 0.3.0)
       em-http-request (>= 0.3.0)
@@ -66,6 +77,26 @@ GEM
     faye-websocket (0.8.0)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.4.0)
+    fuzzyurl (0.2.2)
+    grape (0.8.0)
+      activesupport
+      builder
+      hashie (>= 2.1.0)
+      multi_json (>= 1.3.2)
+      multi_xml (>= 0.5.2)
+      rack (>= 1.3.0)
+      rack-accept
+      rack-mount
+      virtus (>= 1.0.0)
+    grape-entity (0.4.4)
+      activesupport
+      multi_json (>= 1.3.2)
+    grape-roar (0.3.0)
+      grape
+      roar (>= 1.0)
+    grape-swagger (0.9.0)
+      grape (>= 0.8.0)
+      grape-entity
     haml (4.1.0.beta.1)
       tilt
     haml-rails (0.6.0)
@@ -83,25 +114,34 @@ GEM
       hpricot (~> 0.8.6)
       ruby_parser (~> 3.1.1)
     http_parser.rb (0.6.0)
-    i18n (0.6.11)
+    hyperresource (0.9.0)
+      faraday (>= 0.8.6)
+      fuzzyurl (= 0.2.2)
+      json
+      uri_template (>= 0.5.2)
+    i18n (0.7.0)
+    ice_nine (0.11.1)
+    interception (0.5)
     its (0.2.0)
       rspec-core
     jquery-rails (3.1.2)
       railties (>= 3.0, < 5.0)
       thor (>= 0.14, < 2.0)
-    json (1.8.1)
+    json (1.8.2)
     mail (2.5.4)
       mime-types (~> 1.16)
       treetop (~> 1.4.8)
     method_source (0.8.2)
     mime-types (1.25.1)
-    mini_portile (0.6.1)
-    minitest (5.5.0)
+    mini_portile (0.6.2)
+    minitest (5.5.1)
     mock_em (0.2.0)
       timecop (= 0.5.9.2)
     momentjs-rails (2.8.3)
       railties (>= 3.1)
     multi_json (1.10.1)
+    multi_xml (0.5.5)
+    multipart-post (2.0.0)
     nokogiri (1.6.5)
       mini_portile (~> 0.6.0)
     polyglot (0.3.5)
@@ -109,7 +149,14 @@ GEM
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)
+    pry-rescue (1.4.1)
+      interception (>= 0.5)
+      pry
     rack (1.5.2)
+    rack-accept (0.4.5)
+      rack (>= 0.4)
+    rack-mount (0.8.3)
+      rack (>= 1.0.0)
     rack-test (0.6.2)
       rack (>= 1.0)
     rails (4.1.4)
@@ -137,7 +184,7 @@ GEM
       multi_json
       nokogiri
       uber (~> 0.0.7)
-    roar (1.0.0.beta2)
+    roar (1.0.0)
       representable (>= 2.0.1, <= 3.0.0)
     rspec-core (3.1.7)
       rspec-support (~> 3.1.0)
@@ -190,10 +237,16 @@ GEM
       polyglot (>= 0.3.1)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
-    uber (0.0.11)
+    uber (0.0.13)
     uglifier (2.6.0)
       execjs (>= 0.3.0)
       json (>= 1.8.0)
+    uri_template (0.7.0)
+    virtus (1.0.4)
+      axiom-types (~> 0.1)
+      coercible (~> 1.0)
+      descendants_tracker (~> 0.0, >= 0.0.3)
+      equalizer (~> 0.0, >= 0.0.9)
     websocket-driver (0.4.0)
 
 PLATFORMS
@@ -202,16 +255,22 @@ PLATFORMS
 DEPENDENCIES
   coffee-rails (~> 4.0.0)
   faye-rails (~> 2.0)
+  grape (~> 0.8.0)
+  grape-roar (~> 0.3.0)
+  grape-swagger
   haml-rails
   hashie
+  hyperresource
   its
   jquery-rails
   mock_em
   momentjs-rails
   pry
+  pry-rescue
+  rack-test (~> 0.6.2)
   rails (= 4.1.4)
   rails_12factor
-  roar (= 1.0.0.beta2)
+  roar
   rspec-rails (~> 3.1.0)
   sass-rails (~> 4.0.3)
   spring

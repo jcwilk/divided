@@ -1,12 +1,6 @@
 require 'rails_helper'
 
 describe Round do
-  include EMSpecRunner::Mixin
-
-  before do
-    Round.reset
-  end
-
   em_around
 
   describe '.new_player' do

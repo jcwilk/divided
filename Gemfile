@@ -9,7 +9,12 @@ gem 'jquery-rails'
 gem 'momentjs-rails'
 gem 'rails_12factor'
 gem 'hashie'
-gem 'roar', '1.0.0.beta2'
+gem 'roar'
+gem "grape", '~> 0.8.0'
+gem "grape-roar", '~> 0.3.0'
+gem "grape-swagger"
+gem 'hyperresource', group: :test
+gem 'rack-test', '~> 0.6.2', group: :test
 
 group :assets do
   gem 'sass-rails',   '~> 4.0.3'
@@ -19,6 +24,7 @@ end
 
 group :development, :test do
   gem 'pry'
+  gem 'pry-rescue'
   gem 'rspec-rails', '~> 3.1.0'
   gem 'spring'
   gem "spring-commands-rspec"

@@ -33,21 +33,6 @@ $(function() {
   var turnCount = 0;
   var playerPosMap = {};
 
-  // var source = new EventSource('/turns?player_uuid='+player_uuid);
-  // source.addEventListener('turns.new', function(e) {
-  //   console.log(e.data);
-  //   var data = JSON.parse(e.data)
-  //   var new_round = parseInt(data.current_round);
-  //   playerPosMap = data.players;
-
-  //   if (new_round > turnCount) {
-  //     turnCount = new_round;
-  //     console.log('turn '+new_round);
-  //     turnDue = true;
-  //   } else {
-  //     console.log('got dupe turn '+new_round);
-  //   }
-  // });
   var faye = new Faye.Client('/faye');
 
   var player;
@@ -58,6 +43,7 @@ $(function() {
 
   var FACE_WIDTH = 30;
   var FACE_HEIGHT = 32;
+  var TILE_SIZE = 40;
 
   var newWaitingDoom = function(xPos,yPos,uuid){
     var doom = game.add.sprite(
@@ -79,10 +65,9 @@ $(function() {
       <%= %w(starfield.jpg slate_flooring_40x40.png 2x2brown40x40.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       game.load.spritesheet('doomfaces', <%= asset_path('doomfaces.png').inspect %>, FACE_WIDTH, FACE_HEIGHT, 42);
       game.load.spritesheet('lost_soul_basic', <%= asset_path('lost_soul_basic.png').inspect %>, 104, 90, 8);
+      game.load.spritesheet('rgb_glow', <%= asset_path('rgb_120.png').inspect %>, 40, 40, 3);
       game.load.image('hourglass', <%= asset_path('hourglass_small.png').inspect %>);
       game.load.image('player_blip', <%= asset_path('green_blip_19.png').inspect %>);
-      game.load.image('orange_glow', <%= asset_path('orange_40x40.png').inspect %>);
-      game.load.image('blue_glow', <%= asset_path('blue_40x40.png').inspect %>);
     },
     create: function(){
       background = game.add.tileSprite(0, 0, 800, 600, 'starfield');
@@ -96,6 +81,7 @@ $(function() {
       souls = game.add.group();
       livingSouls = game.add.group();
       waitingIcons = game.add.group();
+      glows = game.add.group();
 
       player = newWaitingDoom(first_move[0],first_move[1],player_uuid);
 
@@ -173,6 +159,35 @@ $(function() {
       faye.subscribe('/room_events/advance', function(payload) {
         console.log('advance! '+payload);
         var data = JSON.parse(payload);
+
+        //TODO: Abstract out
+        var hRound = new Hyperagent.Resource();
+        hRound._load(data.halRound);
+        hRound.loaded = true;
+
+        var hPlayer = $.grep(hRound.embedded.participants, function(participant,i) {
+          return (participant.props.uuid == player_uuid);
+        })[0];
+
+        glows.callAllExists('kill',true);
+
+        if(hPlayer !== undefined) {
+          hPlayer.links['dv:moves'].fetch().then(function (moves) {
+            $.each(moves.embedded.moves,function(i,move) {
+              var glow = glows.getFirstDead();
+              var x = xPosToX(move.props.x)-TILE_SIZE/2;
+              var y = yPosToY(move.props.y)-TILE_SIZE/2;
+              if(glow) {
+                glow.reset(x,y);
+              } else {
+                glow = glows.create(x,y,'rgb_glow');
+              }
+              glow.frame = 1;
+              glow.alpha = 0.2;
+              game.add.tween(glow).to({alpha: 0.5},500,Phaser.Easing.Quadratic.InOut,true,0,Number.MAX_VALUE,true);
+            })
+          });
+        }
 
         $.each(waitingMap, function(uuid,_) {
           markAsWaiting(uuid);

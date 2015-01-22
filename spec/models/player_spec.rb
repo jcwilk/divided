@@ -10,11 +10,6 @@ describe Player do
     Player.recent_uuid?(uuid)
   end
 
-  before do
-    Timecop.return
-    Player.reset
-  end
-
   describe '.new_active' do
     subject { Player.new_active }
 

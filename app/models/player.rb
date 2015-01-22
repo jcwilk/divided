@@ -60,12 +60,7 @@ class Player < Hashie::Dash
     @alive
   end
 
-  # class CollectionRepresenter < Roar::Decorator
-  #   include Roar::JSON
-
-  #   collection :players, extend: Player::Representer, class: Player
-  # end
-
+  #TODO: remove this
   module Representer
     include Roar::JSON
 

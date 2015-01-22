@@ -21,6 +21,15 @@ class EMSpecRunner
       EMSpecRunner::FakePublisher.published_messages
     end
 
+    def published_advances
+      published_messages.select{|m| m[0] == '/room_events/advance'}
+    end
+
+    def last_published_round
+      json = published_advances.last[1]
+      json ? Hashie::Mash.new(JSON.parse(json)) : nil
+    end
+
     module ClassMethods
       def em_around
         around(:each) do |example|
@@ -52,6 +61,7 @@ class EMSpecRunner
     fail "already ran!" if @running
     @explicit_finish = false
     @logger = Logger.new(STDOUT)
+    @logger.level = Logger::WARN
 
     old_em = EM
     Object.send(:remove_const, :EM)
@@ -63,7 +73,6 @@ class EMSpecRunner
       EMSpecRunner::FakePublisher.reset
       @running = true
       EM.run do
-        puts 'running'
         block.call(self)
         finish if !@explicit_finish
       end

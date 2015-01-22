@@ -4,4 +4,4 @@
 
 require File.expand_path('../config/application', __FILE__)
 
-FayeRailsDemo::Application.load_tasks
+Divided::Application.load_tasks

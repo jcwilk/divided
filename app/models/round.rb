@@ -36,6 +36,11 @@ class Round
       @participant_counter+= 1
     end
 
+    def by_index(index)
+      #TODO: inefficient, remove/fix me
+      all.find {|r| r.index == index }
+    end
+
     private
 
     def all
@@ -75,13 +80,10 @@ class Round
     player.touch if distance_moved(player) > 0
 
     remaining_players = Set.new(participants) - waiting_players
-    puts "remaining - #{remaining_players.inspect}"
 
     if remaining_players.present?
-      puts 'peeps remaining!'
       RoomEventsController.publish('/room_events/waiting', {player_uuid: player.uuid,current_round: index}.to_json)
     else
-      puts 'advancin'
       Round.advance
     end
 
@@ -109,6 +111,7 @@ class Round
       data[:players] = recent_move_map.reduce({}) {|a,(k,v)| a.merge(k.uuid => v) }
       data[:killed] = killed_players.map(&:uuid)
       data[:current_round] = index
+      data[:halRound] = DV::Representers::Round.render_hash(self)
     end
   end
 
