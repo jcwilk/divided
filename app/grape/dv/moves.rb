@@ -15,7 +15,7 @@ module DV
       if participant.present?
         present participant.current_moves, with: DV::Representers::Moves
       else
-        render nothing: true, status: 404
+        error! 'Participant not found!', 404
       end
     end
   end

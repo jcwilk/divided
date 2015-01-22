@@ -12,7 +12,7 @@ module DV
         get do
           player = ::Player.alive_by_uuid(params[:id])
           if player.nil?
-            render nothing: true, status: 404
+            error! 'Participant not found!', 404
           else
             present player, with: DV::Representers::Participant
           end

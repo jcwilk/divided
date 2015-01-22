@@ -12,7 +12,7 @@ module DV
         get do
           round = ::Round.by_index(params[:index])
           if round.nil?
-            render nothing: true, status: 404
+            error! 'Round not found!', 404
           else
             present round, with: DV::Representers::Round
           end

@@ -12,7 +12,7 @@ module DV
         get do
           room = ::Room.by_uuid(params[:id])
           if room.nil?
-            render nothing: true, status: 404
+            error! 'Room not found!', 404
           else
             present room, with: DV::Representers::Room
           end
