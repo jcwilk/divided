@@ -23,6 +23,9 @@ Because this is at least 50% a fun experiment, it's fairly unique in its archite
 * [RSpec](http://www.rubydoc.info/gems/rspec-expectations/frames) for test love since all of the above test so nicely
   * Not sure about how well Faye will test, but pub/sub is fairly easy to fudge over in tests (so far, fudging over entirely)
   * Using [mock_em](https://github.com/rightscale/mock_em) to quickly test time-based scenarios
+* [Jasmine](http://jasmine.github.io/) for JavaScript testing
+  * [Teaspoon](https://github.com/modeset/teaspoon) for easy integration with the rails asset pipeline
+  * [PhantomJS](http://phantomjs.org/) for headless testing
 
 I previously tried working with puma/rails/redis rather than thin/rails/faye/eventmachine and it was a total shitshow trying to get a single dyno to do anything useful. You can peek around at my prior progress in a legacy branch if you want to make fun of me :P
 

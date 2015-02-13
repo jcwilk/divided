@@ -13,8 +13,6 @@ gem 'roar'
 gem "grape", '~> 0.8.0'
 gem "grape-roar", '~> 0.3.0'
 gem "grape-swagger"
-gem 'hyperresource', group: :test
-gem 'rack-test', '~> 0.6.2', group: :test
 
 group :assets do
   gem 'sass-rails',   '~> 4.0.3'
@@ -28,12 +26,17 @@ group :development, :test do
   gem 'rspec-rails', '~> 3.1.0'
   gem 'spring'
   gem "spring-commands-rspec"
+  gem 'spring-commands-teaspoon'
+  gem 'teaspoon'
 end
 
 group :test do
+  gem 'hyperresource'
+  gem 'rack-test', '~> 0.6.2'
   gem 'timecop'
   gem 'mock_em'
   gem 'its'
+  gem 'phantomjs'
 end
 
 
