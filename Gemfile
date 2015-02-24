@@ -28,6 +28,7 @@ group :development, :test do
   gem "spring-commands-rspec"
   gem 'spring-commands-teaspoon'
   gem 'teaspoon'
+  gem 'grape-rails-routes'
 end
 
 group :test do

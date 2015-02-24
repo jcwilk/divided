@@ -36,7 +36,7 @@ describe 'divided hypermedia' do
       end
 
       it 'includes the canonical hostname' do
-        expect(subject.include?(Divided::CANONICAL_HOST)).to eql(true)
+        expect(subject).to include(Divided::CANONICAL_HOST.chomp(":80")) #chomp off :80 cause the libs do too
       end
     end
   end
@@ -74,7 +74,15 @@ describe 'divided hypermedia' do
     end
 
     context 'and submitting one of them' do
-      it 'advances the round'
+      def submit_move
+        available_moves.first.post
+      end
+
+      it 'advances the round' do
+        finish_in(Round::ROUND_DURATION+1) do
+          expect{ submit_move }.to change { Round.current_number }.by(1)
+        end
+      end
     end
   end
 end
