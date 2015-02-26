@@ -7,26 +7,6 @@ describe 'divided hypermedia' do
     Divided::Application
   end
 
-  let(:client) do
-    HyperResource.new(
-      root: 'http://api.example.com/dv',
-      faraday_options: {
-        builder: Faraday::RackBuilder.new do |builder|
-          builder.request :url_encoded
-          builder.adapter :rack, app
-        end
-      }
-    )
-  end
-
-  def first_room
-    client.dv_rooms.first
-  end
-
-  def current_round
-    first_room.dv_current_round
-  end
-
   describe 'utlities' do
     describe 'rendering an object' do
       subject { DV::Representers::Round.render(Round.current_round) }
@@ -59,12 +39,8 @@ describe 'divided hypermedia' do
       Timecop.travel(Time.now+Round::ROUND_DURATION+1)
     end
 
-    def available_moves
-      current_round.participants.find {|p| p.uuid == @player.uuid }.moves
-    end
-
     subject do
-      available_moves
+      available_moves(@player.uuid)
     end
 
     it 'provides a list of available moves' do
@@ -75,7 +51,7 @@ describe 'divided hypermedia' do
 
     context 'and submitting one of them' do
       def submit_move
-        available_moves.first.post
+        available_moves(@player.uuid).first.post
       end
 
       it 'advances the round' do

@@ -1,7 +1,8 @@
 require 'rails_helper'
 
-describe TurnsController do
+describe "turn advancement" do
   let(:starting_move) { [0,0] }
+  let(:client) { dv_client }
 
   before do
     allow_any_instance_of(Round).to receive(:get_starting_move).and_return(starting_move)
@@ -10,8 +11,14 @@ describe TurnsController do
 
   em_around
 
-  def move(*m)
-    post :create, player_uuid: @player.uuid, next_pos: m
+  def move(x,y)
+    m = fetch_move(x,y)
+    fail "no move matches #{x},#{y}" if m.nil?
+    m.post
+  end
+
+  def fetch_move(x,y)
+    available_moves(@player.uuid).find {|i| i.x == x && i.y == y }
   end
 
   def last_published_move
@@ -23,21 +30,17 @@ describe TurnsController do
   end
 
   it 'allows a move 3 tiles away' do
-    move(3,3)
-    expect(response.status).to eql(200)
+    r=move(3,3)
+    expect(r.response.status).to eql(201)
     expect(last_published_player_move).to eql([3,3])
   end
 
   it 'does not allow a move 4 tiles away' do
-    move(3,4)
-    expect(response.status).to eql(422)
-    expect(last_published_player_move).not_to eql([3,4])
+    expect(fetch_move(3,4)).to be_nil
   end
 
   it 'does not allow a move out of bounds' do
-    move(-1,0)
-    expect(response.status).to eql(422)
-    expect(last_published_player_move).not_to eql([-1,0])
+    expect(fetch_move(-1,0)).to be_nil
   end
 
   context 'if the player stays in place for more than the expiry time' do
@@ -49,7 +52,7 @@ describe TurnsController do
 
     it 'kills the player' do
       proc = Proc.new do
-        move(0,0)
+        move(0,0) rescue nil
         EM.add_timer(3,&proc)
       end
       EM.add_timer(3,&proc)
@@ -69,8 +72,18 @@ describe TurnsController do
       @p2 = Round.new_player
       move(3,3)
       ##
-      post :create, player_uuid: @p2.uuid, next_pos: [2,2]
+      move_p2(2,2)
       move(3,3)
+    end
+
+    def move_p2(x,y)
+      m = fetch_move_p2(x,y)
+      fail "no move matches #{x},#{y}" if m.nil?
+      m.post
+    end
+
+    def fetch_move_p2(x,y)
+      available_moves(@p2.uuid).find {|i| i.x == x && i.y == y }
     end
 
     it 'permits the moves' do
@@ -82,8 +95,7 @@ describe TurnsController do
     end
 
     it 'does not permit further moves from the dead player' do
-      post :create, player_uuid: @p2.uuid, next_pos: [2,2]
-      expect(response.status).to eql(403)
+      expect(get_participant_by_uuid(@p2.uuid)).to be_nil
     end
 
     it 'reverts to single player mode for the living player' do
@@ -95,8 +107,8 @@ describe TurnsController do
     it 'the dead player will not kill players in future rounds' do
       p3 = Round.new_player
       finish_in(6) do
-        post :create, player_uuid: p3.uuid, next_pos: [1,1]
-        expect(Player.alive_by_uuid(p3.uuid)).not_to be_nil
+        available_moves(p3.uuid).find {|i| i.x == 1 && i.y == 1 }.post
+        expect(Player.alive_by_uuid(p3.uuid)).to be_present
       end
     end
   end

@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe Participant do
   let(:player) { double(uuid: 'puuid') }

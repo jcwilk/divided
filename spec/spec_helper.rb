@@ -44,8 +44,11 @@ RSpec.configure do |config|
     Timecop.return
   end
 
-  require 'em_spec_runner'
+  require 'vendor/em_spec_runner'
   config.include(EMSpecRunner::Mixin)
+
+  require 'vendor/dv_utils'
+  config.include(DvUtils::Mixin)
 
 # The settings below are suggested to provide a good initial experience
 # with RSpec, but feel free to customize to your heart's content.
