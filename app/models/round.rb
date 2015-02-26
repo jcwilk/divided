@@ -79,7 +79,7 @@ class Round
     waiting_map[player] = move
     player.touch if distance_moved(player) > 0
 
-    remaining_players = Set.new(participants) - waiting_players
+    remaining_players = Set.new(participating_players) - waiting_players
 
     if remaining_players.present?
       RoomEventsController.publish('/room_events/waiting', {player_uuid: player.uuid,current_round: index}.to_json)
@@ -99,7 +99,7 @@ class Round
           (move[1]-m[1]).abs <= 1 &&
           distance_moved(player) > distance_moved(p)
       end
-    end.keys | (move_map.keys - participants)
+    end.keys | (move_map.keys - participating_players)
   end
 
   def waiting_players
@@ -121,7 +121,7 @@ class Round
 
   def recent_move_map
     #TODO: cache this less painfully
-    p = Set.new(participants.map(&:uuid))
+    p = Set.new(participating_players.map(&:uuid))
     move_map_with_new.select {|k,v| p.include?(k.uuid) }
   end
 
@@ -130,11 +130,15 @@ class Round
   end
 
   def participants
-    @participants || Player.recent
+    participating_players.map {|p| Participant.from_player(player: p) }
+  end
+
+  def participating_players
+    @participating_players || Player.recent
   end
 
   def start
-    return if participants.blank?
+    return if participating_players.blank?
 
     curr_index = index
     EM.add_timer(ROUND_DURATION) do
@@ -143,7 +147,7 @@ class Round
   end
 
   def complete
-    @participants = participants
+    @participating_players = participating_players
     killed_players.each(&:kill)
     RoomEventsController.publish('/room_events/advance', current_data.to_json)
   end

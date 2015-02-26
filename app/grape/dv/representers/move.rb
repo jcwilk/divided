@@ -7,7 +7,7 @@ module DV
       property :y
 
       link :self do |opts|
-        build_url(opts,"/dv/participant/#{player_uuid}/move/#{id}")
+        build_url(opts,"/dv/round/#{round_id}/participant/#{player_uuid}/move/#{id}")
       end
     end
   end

@@ -7,8 +7,10 @@ module DV
       requires :participant_id, type: String, desc: 'Participant uuid.'
       requires :id, type: Integer, desc: 'Move id.'
     end
-    post '/participant/:participant_id/move/:id' do
-      player = Player.alive_by_uuid(params[:participant_id])
+    post '/round/:round_id/participant/:participant_id/move/:id' do
+      if ::Round.current_number.to_s == params[:round_id]
+        player = ::Player.alive_by_uuid(params[:participant_id])
+      end
       if player
         participant = ::Participant.from_player(player: player)
       end

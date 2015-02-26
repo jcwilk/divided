@@ -35,6 +35,12 @@ describe "turn advancement" do
     expect(last_published_player_move).to eql([3,3])
   end
 
+  it 'does not permit a move to be posted twice' do
+    r=fetch_move(3,3)
+    r.post
+    expect { r.post rescue nil }.not_to change { last_published_round }
+  end
+
   it 'does not allow a move 4 tiles away' do
     expect(fetch_move(3,4)).to be_nil
   end

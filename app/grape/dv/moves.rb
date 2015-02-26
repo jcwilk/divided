@@ -7,7 +7,7 @@ module DV
       requires :id, type: String, desc: 'Participant uuid.'
     end
     get '/participant/:id/moves' do
-      player = Player.alive_by_uuid(params[:id])
+      player = ::Player.alive_by_uuid(params[:id])
       if player
         participant = ::Participant.from_player(player: player)
       end
