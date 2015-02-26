@@ -38,9 +38,8 @@ $(function() {
 
   var player;
   console.log(first_move);
-  var souls;
+  var souls, popups, waitingIcons, glows;
   var isPointerDown = false;
-  var waitingIcons;
 
   var FACE_WIDTH = 30;
   var FACE_HEIGHT = 32;
@@ -82,9 +81,9 @@ $(function() {
       floor = game.add.tileSprite(200,100,400,400,'2x2brown40x40');
 
       souls = game.add.group();
-      livingSouls = game.add.group();
       waitingIcons = game.add.group();
       glows = game.add.group();
+      popups = game.add.group();
 
       player = newWaitingDoom(first_move[0],first_move[1],player_uuid);
 
@@ -175,14 +174,16 @@ $(function() {
         glows.callAllExists('kill',true);
         mm = window.MoveMatrix();
 
+        popups.destroy(true,true);
+
         var isMoves = false;
         if(hPlayer !== undefined) {
           hPlayer.links['dv:moves'].fetch().then(function (moves) {
             $.each(moves.embedded.moves,function(i,move) {
               mm.at(move.props.x,move.props.y).addMove(move.url());
               var glow = glows.getFirstDead();
-              var x = xPosToX(move.props.x)-TILE_SIZE/2;
-              var y = yPosToY(move.props.y)-TILE_SIZE/2;
+              var x = xPosToX(move.props.x);
+              var y = yPosToY(move.props.y);
               if(glow) {
                 glow.reset(x,y);
               } else {
@@ -190,8 +191,52 @@ $(function() {
               }
               glow.frame = 1;
               glow.alpha = 0.2;
+              glow.anchor.set(0.5);
               game.add.tween(glow).to({alpha: 0.5},500,Phaser.Easing.Quadratic.InOut,true,0,Number.MAX_VALUE,true);
               isMoves = true;
+              glow.inputEnabled = true;
+              glow.events.onInputUp.add(function(g) {
+                var offsets = [
+                  [+30,+20],
+                  [-30,+20],
+                  [+30,-20],
+                  [-30,-20],
+                  [0,0]
+                ]
+
+                popups.destroy(true,true);
+
+                $.each(mm.at(move.props.x,move.props.y).moves, function(name, url) {
+                  var offset = offsets.pop();
+                  var text = game.add.text(
+                    x+offset[0],
+                    y+offset[1],
+                    name.toUpperCase(),
+                    { font: "16px Arial", fill: "#ffffff", align: "center" }
+                  );
+                  popups.add(text);
+                  text.anchor.set(0.5);
+                  text.inputEnabled = true;
+                  text.events.onInputUp.add(function(t) {
+                    $.ajax(url, {
+                      type: "POST",
+                      statusCode: {
+                        422: function (response) {
+                          //TODO: move this up out of the POST
+                          //game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
+                        },
+                        500: function (response) {
+                           location.reload();
+                        },
+                        403: function (response) {
+                          //TODO: auth lol
+                          //location.reload();
+                        }
+                      }
+                    });
+                  }, this);
+                });
+              });
             });
             //if(isMoves) debugger;
           });
@@ -238,36 +283,15 @@ $(function() {
           soul.frame = 40;
           markAsWaiting(soul.uuid);
           delete playerPosMap[soul.uuid];
+          if(soul.uuid === player_uuid) {
+            game.input.onUp.add(function(p){
+              location.reload();
+            },this);
+          }
         });
       });
     },
     update: function(){
-      if (!isPointerDown && game.input.activePointer.isDown) {
-        isPointerDown = true;
-      } else if (isPointerDown && game.input.activePointer.isUp) {
-        isPointerDown = false;
-        var clickX = xToXPos(game.input.activePointer.x);
-        var clickY = yToYPos(game.input.activePointer.y);
-
-        var atk = mm.at(clickX,clickY).moves.attack;
-        if(atk !== undefined) {
-          console.log('post!');
-          $.ajax(atk, {
-            type: "POST",
-            statusCode: {
-              422: function (response) {
-                 game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
-              },
-              500: function (response) {
-                 location.reload();
-              },
-              403: function (response) {
-                location.reload();
-              }
-            }
-          });
-        }
-      }
     }
   });
 });
