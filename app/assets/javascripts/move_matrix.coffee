@@ -3,9 +3,10 @@ window.MoveMatrix = () ->
   {
     at: (x,y) ->
       key = "#{x},#{y}"
+      mat[key] ?= {}
       {
-        addMove: (link) ->
-          mat[key] = {attack: link}
-        moves: mat[key] || {}
+        addMoves: (newMoves) ->
+          $.extend(mat[key], newMoves)
+        moves: mat[key]
       }
   }

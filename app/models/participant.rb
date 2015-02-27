@@ -5,6 +5,7 @@ class Participant < Hashie::Dash
     property :y, required: true
     property :id, required: true
     property :round_id, required: true
+    property :action, required: true
 
     def valid?
       x >= 0 && x <= 9 &&
@@ -27,7 +28,7 @@ class Participant < Hashie::Dash
       id = 0
       ((x-3)..(x+3)).each do |xi|
         ((y-3)..(y+3)).each do |yi|
-          candidate = Move.new(x:xi, y:yi, player_uuid:uuid, id:id, round_id:round_id)
+          candidate = Move.new(x:xi, y:yi, player_uuid:uuid, id:id, round_id:round_id, action: 'run')
           moves << candidate if candidate.valid?
           id+= 1
         end

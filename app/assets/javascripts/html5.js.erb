@@ -180,7 +180,9 @@ $(function() {
         if(hPlayer !== undefined) {
           hPlayer.links['dv:moves'].fetch().then(function (moves) {
             $.each(moves.embedded.moves,function(i,move) {
-              mm.at(move.props.x,move.props.y).addMove(move.url());
+              var newMoves = {}
+              newMoves[move.props.action] = move.url()
+              mm.at(move.props.x,move.props.y).addMoves(newMoves);
               var glow = glows.getFirstDead();
               var x = xPosToX(move.props.x);
               var y = yPosToY(move.props.y);
