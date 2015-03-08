@@ -3,7 +3,7 @@ class Round
   STATIONARY_EXPIRE_COUNT = 5 #rounds
 
   class << self
-    delegate :waiting_players, :move_map, :current_data,
+    delegate :move_map, :current_data,
       :add_move, :new_player, to: :current_round
 
     def advance

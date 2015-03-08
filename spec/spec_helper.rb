@@ -96,5 +96,4 @@ RSpec.configure do |config|
   Kernel.srand config.seed
 
   require 'pry'
-  require 'its'
 end

@@ -2,13 +2,13 @@ require 'rails_helper'
 
 describe Participant do
   let(:player) { double(uuid: 'puuid') }
-  let(:participant) { Participant.from_player(player: player) }
+  let(:participant) { Participant.new(player: player, round: round) }
 
-  describe '.calculate_moves' do
+  describe '.moves' do
     let(:move_map) { {player => start_spot} }
-    let(:round) { double(living_recent_move_map: move_map) }
+    let(:round) { double(init_pos_map: move_map, index: 5) }
 
-    subject { participant.calculate_moves(round: round) }
+    subject { participant.moves }
 
     context 'for someone in the corner' do
       let(:start_spot) { [0,0] }

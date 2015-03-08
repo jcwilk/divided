@@ -1,7 +1,4 @@
-require 'spec_helper'
-
-require File.join(File.dirname(__FILE__), '../../app/models/player.rb')
-require 'timecop'
+require 'rails_helper'
 
 describe Player do
   let(:uuid) { 'some-uuid' }
@@ -15,30 +12,12 @@ describe Player do
 
     its(:uuid) { should be_a(String) }
 
-    it 'is included in the recent players' do
-      player = subject
-      expect(Player.recent).to include(player)
+    it 'is retrievable' do
+      expect(Player.alive_by_uuid(subject.uuid)).to eql(subject)
     end
 
-    it 'is not included in recent players after sufficient time' do
-      subject
-      expect { Timecop.travel(Time.now+Player::PLAYER_EXPIRE+1) }
-        .to change { Player.recent_uuid?(subject.uuid) }.to(false)
-    end
-  end
-
-  describe '#touch' do
-    let!(:player) { Player.new_active }
-
-    context 'when a player has become stale' do
-      before do
-        Timecop.travel(Time.now+Player::PLAYER_EXPIRE+1)
-      end
-
-      it 'refreshes them and returns them into recent players' do
-        expect { player.touch }.to change { Player.recent.include?(player) }
-          .to(true)
-      end
+    it 'is alive' do
+      expect(subject).to be_alive
     end
   end
 
@@ -49,8 +28,8 @@ describe Player do
       player.kill
     end
 
-    it 'takes them out of the recent list' do
-      expect { kill }.to change { Player.recent.include?(player) }.from(true).to(false)
+    it 'makes them no longer retrievable' do
+      expect { kill }.to change { Player.alive_by_uuid(player.uuid) }.from(player).to(nil)
     end
 
     it 'makes them not alive' do
