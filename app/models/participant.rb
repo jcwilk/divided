@@ -13,39 +13,56 @@ class Participant < Hashie::Dash
     end
   end
 
-  class << self
-    alias_method :from_player, :new
-    private :new
-  end
+  property :player, required: true
+  property :round,  required: true
 
   delegate :uuid, to: :player
 
-  property :player, required: true
-
-  def calculate_moves(round:)
-    x,y = round.living_recent_move_map[player]
-    [].tap do |moves|
+  def moves
+    @moves ||= [].tap do |m|
+      x,y = init_pos
       id = 0
       ((x-3)..(x+3)).each do |xi|
         ((y-3)..(y+3)).each do |yi|
-          candidate = Move.new(x:xi, y:yi, player_uuid:uuid, id:id, round_id:round_id, action: 'run')
-          moves << candidate if candidate.valid?
-          id+= 1
+          candidate = Move.new(
+            x:           xi,
+            y:           yi,
+            player_uuid: uuid,
+            id:          id,
+            round_id:    round_id,
+            action:      'run'
+          )
+          if candidate.valid?
+            m << candidate
+            id+= 1
+          end
         end
       end
     end
   end
 
-  def current_moves
-    calculate_moves(round: current_round)
+  def default_move
+    m = moves
+    m.find {|el| [el.x,el.y] == init_pos } || m.first
+  end
+
+  def choose_move(id)
+    move_by_id(id).tap do |move|
+      round.add_move(player: player, move: move)
+    end
+  end
+
+  def move_by_id(id)
+    moves.find {|m| m.id == id }
   end
 
   def round_id
-    #TODO: might be wise to make a participant frozen to a certain rond
-    current_round.index
+    round.index
   end
 
-  def current_round
-    Round.current_round
+  private
+
+  def init_pos
+    round.init_pos_map[player]
   end
 end

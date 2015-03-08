@@ -41,6 +41,7 @@ RSpec.configure do |config|
 
   config.before(:each) do
     Round.reset
+    Player.reset
     Timecop.return
   end
 

@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe "turn advancement" do
+describe "move submission" do
   let(:starting_move) { [0,0] }
   let(:client) { dv_client }
 
@@ -51,7 +51,7 @@ describe "turn advancement" do
 
   context 'if the player stays in place for more than the expiry time' do
     def wait_too_long(&block)
-      finish_in(Player::PLAYER_EXPIRE*2) do
+      finish_in((Round::STATIONARY_EXPIRE_COUNT+1)*Round::ROUND_DURATION) do
         block.call
       end
     end
@@ -71,7 +71,7 @@ describe "turn advancement" do
     end
   end
 
-  context 'after two players have moved next to each other' do
+  context 'after one player moves next to another' do
     before do
       move(3,3)
       ##
@@ -96,18 +96,18 @@ describe "turn advancement" do
       expect(last_published_move).to eql(@player.uuid => [3,3], @p2.uuid => [2,2])
     end
 
-    it 'reports only the player who moved more as killed' do
-      expect(last_published_round['killed']).to eql([@p2.uuid])
+    it 'reports only the player who did not move as killed' do
+      expect(last_published_round['killed']).to eql([@player.uuid])
     end
 
     it 'does not permit further moves from the dead player' do
-      expect(get_participant_by_uuid(@p2.uuid)).to be_nil
+      expect(get_participant_by_uuid(@player.uuid)).to be_nil
     end
 
     it 'reverts to single player mode for the living player' do
       published_messages.clear
-      move(4,4)
-      expect(last_published_move.keys).to include(@player.uuid)
+      move_p2(4,4)
+      expect(last_published_move.keys).to include(@p2.uuid)
     end
 
     it 'the dead player will not kill players in future rounds' do

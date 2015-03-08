@@ -6,22 +6,22 @@ module DV
     params do
       requires :participant_id, type: String, desc: 'Participant uuid.'
       requires :id, type: Integer, desc: 'Move id.'
+      requires :round_id, type: Integer, desc: 'Round id.'
     end
     post '/round/:round_id/participant/:participant_id/move/:id' do
-      if ::Round.current_number.to_s == params[:round_id]
+      round = ::Room.all.first.current_round
+      if round.index == params[:round_id]
         player = ::Player.alive_by_uuid(params[:participant_id])
       end
       if player
-        participant = ::Participant.from_player(player: player)
+        participant = ::Participant.new(player: player, round: round)
       end
 
       #TODO: a lot of this is redundant with DV::Moves
-      # plus it's too much domain logic for the controller anyways
       if participant.present?
-        move = participant.current_moves.find {|m| m.id == params[:id] }
+        move = participant.choose_move(params[:id])
 
         if move.present?
-          ::Round.add_move(player,[move.x,move.y])
           present move, with: DV::Representers::Move
         else
           #TODO: better error codes so client can distinguish, see js

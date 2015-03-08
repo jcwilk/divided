@@ -7,13 +7,15 @@ module DV
       requires :id, type: String, desc: 'Participant uuid.'
     end
     get '/participant/:id/moves' do
-      player = ::Player.alive_by_uuid(params[:id])
-      if player
-        participant = ::Participant.from_player(player: player)
-      end
+      #TODO: make this specific to a round
+      #if round.index == params[:round_id]
+        player = ::Player.alive_by_uuid(params[:id])
+      #end
 
-      if participant.present?
-        present participant.current_moves, with: DV::Representers::Moves
+      if player
+        round = ::Room.all.first.current_round
+        participant = ::Participant.new(player: player, round: round)
+        present participant.moves, with: DV::Representers::Moves
       else
         error! 'Participant not found!', 404
       end
