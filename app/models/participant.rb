@@ -36,6 +36,21 @@ class Participant < Hashie::Dash
             m << candidate
             id+= 1
           end
+
+          if near_other_players?(xi,yi)
+            candidate = Move.new(
+              x:           xi,
+              y:           yi,
+              player_uuid: uuid,
+              id:          id,
+              round_id:    round_id,
+              action:      'attack'
+            )
+            if candidate.valid?
+              m << candidate
+              id+= 1
+            end
+          end
         end
       end
     end
@@ -64,5 +79,12 @@ class Participant < Hashie::Dash
 
   def init_pos
     round.init_pos_map[player]
+  end
+
+  def near_other_players?(x,y)
+    (round.init_pos_map.keys - [player]).any? do |p|
+      px,py = round.init_pos_map[p]
+      [(px-x).abs,(py-y).abs].max <= 1
+    end
   end
 end

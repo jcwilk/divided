@@ -132,8 +132,8 @@ class Round
   def killed_players
     participating_players.select do |p|
       x,y = init_pos_map[p]
-      #TODO: ensure only attack moves counted here
-      settled_move_map.any? {|k,v| k != p && (v.x - x).abs <= 1 && (v.y - y).abs <= 1 } \
+
+      settled_move_map.any? {|k,v| k != p && v.action == 'attack' && (v.x - x).abs <= 1 && (v.y - y).abs <= 1 } \
         || stationary_too_long?(player: p)
     end
   end
