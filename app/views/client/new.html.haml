@@ -4,11 +4,13 @@
     %th Description
     %th Slider
     %th Value
+    %th Default
   - @slider_vars.each do |name,default|
     %tr
       %td= name
       %td
         .slider{:'data-variable' => name, :'data-default' => default}
       %td{:id => "#{name}-display"}= default
+      %td= default
 %script{:type=>"text/javascript"}= "window._divided_player_uuid = #{@player_uuid.inspect}; window._divided_first_move = JSON.parse(#{@first_move.inspect})".html_safe
 = javascript_include_tag 'html5'

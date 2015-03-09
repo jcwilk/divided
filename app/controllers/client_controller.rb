@@ -1,10 +1,8 @@
 class ClientController < ApplicationController
   def new
     @slider_vars = {
-      #turnDuration: 5000,
-      preventDoubleInputDelay: 180,
-      waitAfterInputBeforeTurnEndDelay: 200,
-      animationDuration: 100
+      animationDuration: 650,
+      blinkDelay: 500
     }
     player = Round.new_player
     @player_uuid = player.uuid #SecureRandom.urlsafe_base64(8)

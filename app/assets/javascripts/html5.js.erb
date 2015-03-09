@@ -6,14 +6,18 @@ $(function() {
   var player_uuid = window._divided_player_uuid;
   var first_move = window._divided_first_move;
 
-  $('.slider').slider({min: 50, max: 5000,
-    change: function(event,ui){
+  var sliderChange =
+  $('.slider').slider({min: 1, max: 5000,
+    slide: function(event,ui){
       var varname = $(ui.handle.parentElement).data('variable');
       $('td#'+varname+'-display').html(ui.value);
       sliderContainer[varname] = ui.value;
     },
     create: function(event,ui){
       var target = $(event.target);
+      var val = target.data('default');
+      target.slider('option',{min: val/2, max: val*2});
+      target.slider('value',target.data('default'));
       sliderContainer[target.data('variable')] = target.data('default');
     }
   });
@@ -171,7 +175,7 @@ $(function() {
           return (participant.props.uuid == player_uuid);
         })[0];
 
-        glows.callAllExists('kill',true);
+        glows.callAllExists('fadeAndKill',true);
         mm = window.MoveMatrix();
 
         popups.destroy(true,true);
@@ -193,12 +197,21 @@ $(function() {
               }
               glow.alpha = 0;
               glow.anchor.set(0.5);
+              var blink;
               if(move.props.action == 'attack') {
                 glow.frame = 0;
-                game.add.tween(glow).to({alpha: 0.4},300,Phaser.Easing.Quadratic.InOut,true,0,Number.MAX_VALUE,true);
+                blink = game.add.tween(glow).to({alpha: 0.4},sliderContainer.blinkDelay*0.7,Phaser.Easing.Quadratic.InOut,true,0,Number.MAX_VALUE,true);
               } else {
                 glow.frame = 1;
-                game.add.tween(glow).to({alpha: 0.4},500,Phaser.Easing.Quadratic.InOut,true,0,Number.MAX_VALUE,true);
+                blink = game.add.tween(glow).to({alpha: 0.4},sliderContainer.blinkDelay,Phaser.Easing.Quadratic.InOut,true,0,Number.MAX_VALUE,true);
+              }
+
+              glow.fadeAndKill = function() {
+                blink.stop();
+                game.add.tween(glow).to({alpha: 0.0},sliderContainer.blinkDelay*(glow.alpha/0.4),Phaser.Easing.Quadratic.InOut,true,0)
+                  .onComplete.add(function() {
+                    glow.kill();
+                  });
               }
 
               isMoves = true;
