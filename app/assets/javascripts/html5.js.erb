@@ -44,6 +44,9 @@ $(function() {
   console.log(first_move);
   var souls, popups, waitingIcons, glows;
   var isPointerDown = false;
+  var isDead = false;
+
+  var turnTween;
 
   var FACE_WIDTH = 30;
   var FACE_HEIGHT = 32;
@@ -313,6 +316,13 @@ $(function() {
           }
         });
 
+        if(turnTween !== undefined) {
+          turnTween.stop();
+          var fromAlpha = background.alpha/2;
+          background.alpha = 1;
+          turnTween = game.add.tween(background).from({alpha: fromAlpha},200,Phaser.Easing.Circular.Out,true);
+        }
+
         $.each(souls.filter(function(s,i,group) {
           return $.inArray(s.uuid,data.killed) > -1
         }).list, function(i,soul) {
@@ -320,6 +330,9 @@ $(function() {
           markAsWaiting(soul.uuid);
           delete playerPosMap[soul.uuid];
           if(soul.uuid === player_uuid) {
+            isDead = true;
+            turnTween.stop();
+            background.alpha = 1;
             game.input.onUp.add(function(p){
               location.reload();
             },this);
@@ -337,6 +350,17 @@ $(function() {
             soul.frame = 40;
           }
         });
+
+        if(!isDead) {
+          var doTween = function(){
+            turnTween = game.add.tween(background).to({alpha: 0.0},4600,Phaser.Easing.Circular.In,true);
+          }
+          if(turnTween !== undefined) {
+            turnTween.onComplete.add(doTween);
+          } else {
+            doTween();
+          }
+        }
       });
 
       loadGlowsForParticipant(resourceFromJSON(window._divided_participant));
