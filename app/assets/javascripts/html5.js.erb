@@ -104,6 +104,7 @@ $(function() {
 
         glow.fadeAndKill = function() {
           blink.stop();
+          glow.events.onInputUp.removeAll();
           game.add.tween(glow).to({alpha: 0.0},sliderContainer.blinkDelay*(glow.alpha/0.4),Phaser.Easing.Quadratic.InOut,true,0)
             .onComplete.add(function() {
               glow.kill();
@@ -122,36 +123,46 @@ $(function() {
 
           popups.destroy(true,true);
 
-          $.each(mm.at(move.props.x,move.props.y).moves, function(name, url) {
-            var offset = offsets.pop();
-            var text = game.add.text(
-              x+offset[0],
-              y+offset[1],
-              name.toUpperCase(),
-              { font: "16px Arial", fill: "#ffffff", align: "center" }
-            );
-            popups.add(text);
-            text.anchor.set(0.5);
-            text.inputEnabled = true;
-            text.events.onInputUp.add(function(t) {
-              $.ajax(url, {
-                type: "POST",
-                statusCode: {
-                  422: function (response) {
-                    //TODO: move this up out of the POST
-                    //game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
-                  },
-                  500: function (response) {
-                     location.reload();
-                  },
-                  403: function (response) {
-                    //TODO: auth lol
-                    //location.reload();
-                  }
+          var postToUrl = function(u) {
+            $.ajax(u, {
+              type: "POST",
+              statusCode: {
+                422: function (response) {
+                  //TODO: move this up out of the POST
+                  //game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
+                },
+                500: function (response) {
+                   location.reload();
+                },
+                403: function (response) {
+                  //TODO: auth lol
+                  //location.reload();
                 }
-              });
-            }, this);
-          });
+              }
+            });
+          }
+
+          var overlappingMoves = mm.at(move.props.x,move.props.y).moves;
+
+          if(Object.keys(overlappingMoves).length == 1) {
+            postToUrl(overlappingMoves[Object.keys(overlappingMoves)[0]]);
+          } else {
+            $.each(overlappingMoves, function(name, url) {
+              var offset = offsets.pop();
+              var text = game.add.text(
+                x+offset[0],
+                y+offset[1],
+                name.toUpperCase(),
+                { font: "16px Arial", fill: "#ffffff", align: "center" }
+              );
+              popups.add(text);
+              text.anchor.set(0.5);
+              text.inputEnabled = true;
+              text.events.onInputUp.add(function(t) {
+                postToUrl(url);
+              }, this);
+            });
+          }
         });
       });
     });
