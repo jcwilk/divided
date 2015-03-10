@@ -66,6 +66,97 @@ $(function() {
     return doom;
   }
 
+  var resourceFromJSON = function(json) {
+    var res = new Hyperagent.Resource();
+    res._load(json);
+    res.loaded = true;
+    return res;
+  }
+
+  var loadGlowsForParticipant = function(participant) {
+    glows.callAllExists('fadeAndKill',true);
+    mm = window.MoveMatrix();
+    popups.destroy(true,true);
+
+    participant.links['dv:moves'].fetch().then(function (moves) {
+      $.each(moves.embedded.moves,function(i,move) {
+        var newMoves = {}
+        newMoves[move.props.action] = move.url()
+        mm.at(move.props.x,move.props.y).addMoves(newMoves);
+        var glow = glows.getFirstDead();
+        var x = xPosToX(move.props.x);
+        var y = yPosToY(move.props.y);
+        if(glow) {
+          glow.reset(x,y);
+        } else {
+          glow = glows.create(x,y,'rgb_glow');
+        }
+        glow.alpha = 0;
+        glow.anchor.set(0.5);
+        var blink;
+        if(move.props.action == 'attack') {
+          glow.frame = 0;
+          blink = game.add.tween(glow).to({alpha: 0.4},sliderContainer.blinkDelay*0.7,Phaser.Easing.Quadratic.InOut,true,0,Number.MAX_VALUE,true);
+        } else {
+          glow.frame = 1;
+          blink = game.add.tween(glow).to({alpha: 0.4},sliderContainer.blinkDelay,Phaser.Easing.Quadratic.InOut,true,0,Number.MAX_VALUE,true);
+        }
+
+        glow.fadeAndKill = function() {
+          blink.stop();
+          game.add.tween(glow).to({alpha: 0.0},sliderContainer.blinkDelay*(glow.alpha/0.4),Phaser.Easing.Quadratic.InOut,true,0)
+            .onComplete.add(function() {
+              glow.kill();
+            });
+        }
+
+        glow.inputEnabled = true;
+        glow.events.onInputUp.add(function(g) {
+          var offsets = [
+            [+30,+20],
+            [-30,+20],
+            [+30,-20],
+            [-30,-20],
+            [0,0]
+          ]
+
+          popups.destroy(true,true);
+
+          $.each(mm.at(move.props.x,move.props.y).moves, function(name, url) {
+            var offset = offsets.pop();
+            var text = game.add.text(
+              x+offset[0],
+              y+offset[1],
+              name.toUpperCase(),
+              { font: "16px Arial", fill: "#ffffff", align: "center" }
+            );
+            popups.add(text);
+            text.anchor.set(0.5);
+            text.inputEnabled = true;
+            text.events.onInputUp.add(function(t) {
+              $.ajax(url, {
+                type: "POST",
+                statusCode: {
+                  422: function (response) {
+                    //TODO: move this up out of the POST
+                    //game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
+                  },
+                  500: function (response) {
+                     location.reload();
+                  },
+                  403: function (response) {
+                    //TODO: auth lol
+                    //location.reload();
+                  }
+                }
+              });
+            }, this);
+          });
+        });
+      });
+    });
+  }
+
   var game = new Phaser.Game(800, 600, Phaser.AUTO, 'divided-viewport', {
     preload: function() {
       <%= %w(starfield.jpg slate_flooring_40x40.png 2x2brown40x40.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
@@ -167,100 +258,14 @@ $(function() {
         var data = JSON.parse(payload);
 
         //TODO: Abstract out
-        var hRound = new Hyperagent.Resource();
-        hRound._load(data.halRound);
-        hRound.loaded = true;
+        var hRound = resourceFromJSON(data.halRound);
 
         var hPlayer = $.grep(hRound.embedded.participants, function(participant,i) {
           return (participant.props.uuid == player_uuid);
         })[0];
 
-        glows.callAllExists('fadeAndKill',true);
-        mm = window.MoveMatrix();
-
-        popups.destroy(true,true);
-
-        var isMoves = false;
         if(hPlayer !== undefined) {
-          hPlayer.links['dv:moves'].fetch().then(function (moves) {
-            $.each(moves.embedded.moves,function(i,move) {
-              var newMoves = {}
-              newMoves[move.props.action] = move.url()
-              mm.at(move.props.x,move.props.y).addMoves(newMoves);
-              var glow = glows.getFirstDead();
-              var x = xPosToX(move.props.x);
-              var y = yPosToY(move.props.y);
-              if(glow) {
-                glow.reset(x,y);
-              } else {
-                glow = glows.create(x,y,'rgb_glow');
-              }
-              glow.alpha = 0;
-              glow.anchor.set(0.5);
-              var blink;
-              if(move.props.action == 'attack') {
-                glow.frame = 0;
-                blink = game.add.tween(glow).to({alpha: 0.4},sliderContainer.blinkDelay*0.7,Phaser.Easing.Quadratic.InOut,true,0,Number.MAX_VALUE,true);
-              } else {
-                glow.frame = 1;
-                blink = game.add.tween(glow).to({alpha: 0.4},sliderContainer.blinkDelay,Phaser.Easing.Quadratic.InOut,true,0,Number.MAX_VALUE,true);
-              }
-
-              glow.fadeAndKill = function() {
-                blink.stop();
-                game.add.tween(glow).to({alpha: 0.0},sliderContainer.blinkDelay*(glow.alpha/0.4),Phaser.Easing.Quadratic.InOut,true,0)
-                  .onComplete.add(function() {
-                    glow.kill();
-                  });
-              }
-
-              isMoves = true;
-              glow.inputEnabled = true;
-              glow.events.onInputUp.add(function(g) {
-                var offsets = [
-                  [+30,+20],
-                  [-30,+20],
-                  [+30,-20],
-                  [-30,-20],
-                  [0,0]
-                ]
-
-                popups.destroy(true,true);
-
-                $.each(mm.at(move.props.x,move.props.y).moves, function(name, url) {
-                  var offset = offsets.pop();
-                  var text = game.add.text(
-                    x+offset[0],
-                    y+offset[1],
-                    name.toUpperCase(),
-                    { font: "16px Arial", fill: "#ffffff", align: "center" }
-                  );
-                  popups.add(text);
-                  text.anchor.set(0.5);
-                  text.inputEnabled = true;
-                  text.events.onInputUp.add(function(t) {
-                    $.ajax(url, {
-                      type: "POST",
-                      statusCode: {
-                        422: function (response) {
-                          //TODO: move this up out of the POST
-                          //game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
-                        },
-                        500: function (response) {
-                           location.reload();
-                        },
-                        403: function (response) {
-                          //TODO: auth lol
-                          //location.reload();
-                        }
-                      }
-                    });
-                  }, this);
-                });
-              });
-            });
-            //if(isMoves) debugger;
-          });
+          loadGlowsForParticipant(hPlayer);
         }
 
         $.each(waitingMap, function(uuid,_) {
@@ -311,6 +316,8 @@ $(function() {
           }
         });
       });
+
+      loadGlowsForParticipant(resourceFromJSON(window._divided_participant));
     },
     update: function(){
     }
