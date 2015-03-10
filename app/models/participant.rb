@@ -13,46 +13,66 @@ class Participant < Hashie::Dash
     end
   end
 
+  class MoveGenerator
+    delegate :round, :player, :round_id, :uuid, to: :participant
+
+    attr_reader :participant, :next_id, :moves
+    private :next_id
+
+    def initialize(participant:)
+      @participant = participant
+      @next_id = 0
+      @moves = []
+    end
+
+    def add_attack(options)
+      add_move(options.merge(action: 'attack'))
+    end
+
+    def add_run(options)
+      add_move(options.merge(action: 'run'))
+    end
+
+    private
+
+    def advance_id
+      @next_id+= 1
+    end
+
+    def add_move(options)
+      m = Move.new({
+        player_uuid: uuid,
+        id:          next_id,
+        round_id:    round_id
+      }.merge(options))
+      if m.valid?
+        advance_id
+        moves << m
+      else
+        false
+      end
+    end
+  end
+
   property :player, required: true
   property :round,  required: true
 
   delegate :uuid, to: :player
 
   def moves
-    @moves ||= [].tap do |m|
+    @moves ||= begin
+      gen = MoveGenerator.new(participant: self)
       x,y = init_pos
-      id = 0
       ((x-3)..(x+3)).each do |xi|
         ((y-3)..(y+3)).each do |yi|
-          candidate = Move.new(
-            x:           xi,
-            y:           yi,
-            player_uuid: uuid,
-            id:          id,
-            round_id:    round_id,
-            action:      'run'
-          )
-          if candidate.valid?
-            m << candidate
-            id+= 1
-          end
+          gen.add_run(x: xi, y: yi)
 
           if near_other_players?(xi,yi)
-            candidate = Move.new(
-              x:           xi,
-              y:           yi,
-              player_uuid: uuid,
-              id:          id,
-              round_id:    round_id,
-              action:      'attack'
-            )
-            if candidate.valid?
-              m << candidate
-              id+= 1
-            end
+            gen.add_attack(x: xi, y: yi)
           end
         end
       end
+      gen.moves
     end
   end
 
