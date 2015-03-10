@@ -313,6 +313,12 @@ $(function() {
             game.input.onUp.add(function(p){
               location.reload();
             },this);
+            game.stage.backgroundColor = '#FF0000';
+            game.add.tween(background).from({alpha: 0.0},200,Phaser.Easing.Default,true)
+              .onComplete.add(function(){
+                game.stage.backgroundColor = '#880000';
+                game.add.tween(background).to({alpha: 0.0},10000,Phaser.Easing.Default,true);
+              });
           }
         });
       });
