@@ -317,7 +317,6 @@ $(function() {
           return $.inArray(s.uuid,data.killed) > -1
         }).list, function(i,soul) {
           soul.animations.stop();
-          soul.frame = 40;
           markAsWaiting(soul.uuid);
           delete playerPosMap[soul.uuid];
           if(soul.uuid === player_uuid) {
@@ -325,11 +324,17 @@ $(function() {
               location.reload();
             },this);
             game.stage.backgroundColor = '#FF0000';
-            game.add.tween(background).from({alpha: 0.0},200,Phaser.Easing.Default,true)
+            game.add.tween(background).to({alpha: 0.0},100,Phaser.Easing.Circular.In,true)
               .onComplete.add(function(){
-                game.stage.backgroundColor = '#880000';
-                game.add.tween(background).to({alpha: 0.0},10000,Phaser.Easing.Default,true);
+                soul.frame = 40;
+                game.add.tween(background).to({alpha: 1.0},200,Phaser.Easing.Circular.Out,true)
+                  .onComplete.add(function(){
+                    game.stage.backgroundColor = '#880000';
+                    game.add.tween(background).to({alpha: 0.0},10000,Phaser.Easing.Circular.Out,true);
+                  });
               });
+          } else {
+            soul.frame = 40;
           }
         });
       });
