@@ -7,17 +7,21 @@ describe "Move Matrix", () ->
     mm = window.MoveMatrix()
 
   describe "at", () ->
-    describe "when there are other `at` scope instances"
+    describe "when there are other `at` scope instances", () ->
       at1 = null
       at2 = null
 
       beforeEach () ->
-        at1 = mm.at(1,1)
-        at2 = mm.at(1,1)
+        at1 = mm.at(1,2)
+        at2 = mm.at(1,2)
 
       it "correctly reflects changes made by other `at` scopes", () ->
         at1.addMoves(tricky: 'business')
         expect(at2.moves.tricky).toEqual('business')
+
+      it "identifies as the correct x,y", () ->
+        expect(at1.x).toEqual(1)
+        expect(at1.y).toEqual(2)
 
   describe "addMoves", () ->
     [x,y] = [0,0]
@@ -40,3 +44,23 @@ describe "Move Matrix", () ->
     it "reflects the action", () ->
       addMoves()
       expect(mm.at(x,y).moves[action]).toBeDefined()
+
+  describe "all", () ->
+    describe "without any moves added", () ->
+      it "is empty", () ->
+
+    describe "after two moves have been added to the same spot", () ->
+      beforeEach () ->
+        mm.at(3,4).addMoves(att: 'yep')
+        mm.at(3,4).addMoves(woop: 'holla')
+
+      it "contains one spot", () ->
+        expect(mm.all.length).toEqual(1)
+
+      it "has two moves at the spot", () ->
+        expect(Object.keys(mm.all[0].moves).length).toEqual(2)
+
+      it "represents the correct position", () ->
+        expect(mm.all[0].x).toEqual(3)
+        expect(mm.all[0].y).toEqual(4)
+
