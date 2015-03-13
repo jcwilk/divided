@@ -1,4 +1,5 @@
-window.MoveMatrix = () ->
+window.divided?= {}
+window.divided.moveMatrix = () ->
   mat = {}
   all = []
   at = (x,y) ->

@@ -1,5 +1,6 @@
 //= require phaser.min
 //= require move_matrix
+//= require selection_overlay
 
 $(function() {
   var sliderContainer = {};
@@ -42,7 +43,7 @@ $(function() {
 
   var player;
   console.log(first_move);
-  var souls, popups, waitingIcons, glows;
+  var souls, waitingIcons;
   var isPointerDown = false;
   var isDead = false;
 
@@ -52,7 +53,11 @@ $(function() {
   var FACE_HEIGHT = 32;
   var TILE_SIZE = 40;
 
-  var mm = window.MoveMatrix();
+  var mm = window.divided.moveMatrix();
+  var selectionOverlay = window.divided.selectionOverlay({
+    xPosToX: xPosToX,
+    yPosToY: yPosToY
+  });
 
   var newWaitingDoom = function(xPos,yPos,uuid){
     var doom = game.add.sprite(
@@ -76,43 +81,9 @@ $(function() {
     return res;
   }
 
-  var clearGlows = function() {
-    glows.callAllExists('fadeAndKill',true);
-    popups.destroy(true,true);
-  }
-
-  var textToPos = function(content,xPos,yPos) {
-    var x = xPosToX(xPos);
-    var y = yPosToY(yPos);
-    var t = game.add.text(
-      x,
-      y,
-      content,
-      {
-        fill: "#ffffff", align: "center", stroke: '#000000', strokeThickness: 2
-      }
-    );
-    t.font = 'Arial';
-    t.fontWeight = 'bold';
-    t.fontSize = 15;
-    t.anchor.set(0.5);
-    t.angle = 25;
-    //text.alpha = 0.5;
-    popups.add(t);
-    return t
-  }
-
-  var getGlow = function(x,y) {
-    var g = glows.getFirstDead();
-    if(g) {
-      g.reset(x,y);
-    } else {
-      g = glows.create(x,y,'rgb_glow');
-    }
-    g.anchor.set(0.5);
-    g.alpha = 0;
-    return g;
-  }
+  var clearGlows = selectionOverlay.clearGlows;
+  var textToPos  = selectionOverlay.getText;
+  var getGlow    = selectionOverlay.getGlow;
 
   var glowForActionsAtPos = function(rotation,xPos,yPos) {
     var x = xPosToX(xPos);
@@ -159,9 +130,9 @@ $(function() {
   }
 
   var drawMatrixGlows = function() {
+    console.log(mm.all);
     $.each(mm.all, function(i,at) {
       var glow = glowForActionsAtPos(Object.keys(at.moves),at.x,at.y);
-
       glow.inputEnabled = true;
       glow.events.onInputUp.add(function(g) {
         clearGlows();
@@ -208,7 +179,7 @@ $(function() {
   }
 
   var loadGlowsForParticipant = function(participant) {
-    mm = window.MoveMatrix();
+    mm = window.divided.moveMatrix();
     clearGlows();
 
     participant.links['dv:moves'].fetch().then(function (moves) {
@@ -242,8 +213,8 @@ $(function() {
 
       souls = game.add.group();
       waitingIcons = game.add.group();
-      glows = game.add.group();
-      popups = game.add.group();
+
+      selectionOverlay.setGame(game);
 
       player = newWaitingDoom(first_move[0],first_move[1],player_uuid);
 
