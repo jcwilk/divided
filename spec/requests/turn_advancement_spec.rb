@@ -11,14 +11,18 @@ describe "move submission" do
 
   em_around
 
-  def move(x,y)
-    m = fetch_move(x,y)
+  def move(x,y,options = {})
+    m = fetch_move(x,y,options)
     fail "no move matches #{x},#{y}" if m.nil?
     m.post
   end
 
-  def fetch_move(x,y)
-    available_moves(@player.uuid).find {|i| i.x == x && i.y == y }
+  def attack(x,v,options = {})
+    move(options.merge(action: 'attack'))
+  end
+
+  def fetch_move(x,y,action: 'run', p: @player)
+    available_moves(p.uuid).find {|i| i.action == action && i.x == x && i.y == y }
   end
 
   def last_published_move
@@ -49,7 +53,7 @@ describe "move submission" do
     expect(fetch_move(-1,0)).to be_nil
   end
 
-  context 'if the player stays in place for more than the expiry time' do
+  context 'if the player idles for too many rounds in a row' do
     def wait_too_long(&block)
       finish_in((Round::STATIONARY_EXPIRE_COUNT+1)*Round::ROUND_DURATION) do
         block.call
@@ -71,25 +75,23 @@ describe "move submission" do
     end
   end
 
-  context 'after one player moves next to another' do
+  context 'after one player attacks another' do
     before do
       move(3,3)
       ##
       @p2 = Round.new_player
       move(3,3)
       ##
-      move_p2(2,2)
+      move_p2(2,2, action: 'attack')
       move(3,3)
     end
 
-    def move_p2(x,y)
-      m = fetch_move_p2(x,y)
-      fail "no move matches #{x},#{y}" if m.nil?
-      m.post
+    def move_p2(x,y,options = {})
+      move(x,y,options.merge(p: @p2))
     end
 
-    def fetch_move_p2(x,y)
-      available_moves(@p2.uuid).find {|i| i.x == x && i.y == y }
+    def fetch_move_p2(x,y,options = {})
+      fetch_move(x,y,options.merge(p: @p2))
     end
 
     it 'permits the moves' do
@@ -108,14 +110,6 @@ describe "move submission" do
       published_messages.clear
       move_p2(4,4)
       expect(last_published_move.keys).to include(@p2.uuid)
-    end
-
-    it 'the dead player will not kill players in future rounds' do
-      p3 = Round.new_player
-      finish_in(6) do
-        available_moves(p3.uuid).find {|i| i.x == 1 && i.y == 1 }.post
-        expect(Player.alive_by_uuid(p3.uuid)).to be_present
-      end
     end
   end
 end
