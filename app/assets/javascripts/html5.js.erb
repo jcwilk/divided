@@ -240,7 +240,7 @@ $(function() {
         });
 
         if(hPlayer !== undefined) {
-          selectionOverlay.loadGlowsForParticipant(hPlayer).then(function(val){
+          selectionOverlay.selectionForParticipant(hPlayer).then(function(val){
             if(stillThisRound()) {
               return val;
             } else {
@@ -286,9 +286,7 @@ $(function() {
           }
           if(turnTween !== undefined) {
             turnTween.stop();
-            var fromAlpha = background.alpha/2;
-            background.alpha = 1;
-            turnTween = game.add.tween(background).from({alpha: fromAlpha},200,Phaser.Easing.Circular.Out,true);
+            turnTween = game.add.tween(background).to({alpha: 1},200,Phaser.Easing.Bounce.In,true);
             turnTween.onComplete.add(doTween);
           } else {
             doTween();
@@ -297,7 +295,7 @@ $(function() {
       });
 
       var initialParticipant = resourceFromJSON(window._divided_participant);
-      selectionOverlay.loadGlowsForParticipant(initialParticipant).done();
+      selectionOverlay.selectionForParticipant(initialParticipant).done();
     },
     update: function(){
     }

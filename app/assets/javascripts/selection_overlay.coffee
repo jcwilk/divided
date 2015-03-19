@@ -133,9 +133,9 @@ selectionOverlay = (options) ->
                 postToUrl(url)
               this)
       return currentDefer
-    loadGlowsForParticipant: (participant) ->
+    selectionForParticipant: (participant) ->
       obj.reset()
-      promise = (participant.links['dv:moves'].fetch().then((moves) ->
+      promise = participant.links['dv:moves'].fetch().then((moves) ->
         $.each moves.embedded.moves, (i,move) ->
           newMoves = {}
           newMoves[move.props.action] = move.url()
@@ -146,7 +146,6 @@ selectionOverlay = (options) ->
         console.log("Failed promise!")
         console.log(error)
         console.log(error.stack)
-      )
       return promise
   }
 window.divided.selectionOverlay = selectionOverlay
