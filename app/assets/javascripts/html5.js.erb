@@ -53,11 +53,7 @@ $(function() {
   var FACE_HEIGHT = 32;
   var TILE_SIZE = 40;
 
-  var selectionOverlay = window.divided.selectionOverlay({
-    xPosToX:   xPosToX,
-    yPosToY:   yPosToY,
-    extConfig: sliderContainer
-  });
+  var selectionOverlay;
 
   var newWaitingDoom = function(xPos,yPos,uuid){
     var doom = game.add.sprite(
@@ -81,26 +77,6 @@ $(function() {
     return res;
   }
 
-  var loadGlowsForParticipant = function(participant) {
-    selectionOverlay.reset();
-
-    participant.links['dv:moves'].fetch().then(function(moves) {
-      $.each(moves.embedded.moves, function(i,move) {
-        var newMoves = {}
-        newMoves[move.props.action] = move.url()
-        selectionOverlay.at(move.props.x,move.props.y).addMoves(newMoves);
-      })
-
-      selectionOverlay.drawMatrixGlows();
-    })
-    .catch(function(error) {
-      console.log("Failed promise!")
-      console.log(error);
-      console.log(error.stack);
-    })
-    .done();
-  }
-
   var game = new Phaser.Game(800, 600, Phaser.AUTO, 'divided-viewport', {
     preload: function() {
       <%= %w(starfield.jpg slate_flooring_40x40.png 2x2brown40x40.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
@@ -122,7 +98,12 @@ $(function() {
       souls = game.add.group();
       waitingIcons = game.add.group();
 
-      selectionOverlay.setGame(game);
+      selectionOverlay = window.divided.selectionOverlay({
+        xPosToX:   xPosToX,
+        yPosToY:   yPosToY,
+        extConfig: sliderContainer,
+        game: game
+      });
 
       player = newWaitingDoom(first_move[0],first_move[1],player_uuid);
 
@@ -130,26 +111,33 @@ $(function() {
       player.blip.anchor.setTo(0.5);
       player.addChild(player.blip);
 
-      var waitingMap = {}
+      var waitingMap = {};
+      var choosingUuids = [];
       var markAsChoosing = function(uuid) {
-        var pos = playerPosMap[uuid];
-        if(!pos || waitingMap[uuid]) return;
+        if(uuid != player_uuid) choosingUuids.push(uuid);
+      }
 
-        console.log("marking as choosing");
+      var displayAllChoosing = function() {
+        $.each($.unique(choosingUuids), function(i, uuid) {
+          var pos = playerPosMap[uuid];
+          if(!pos || waitingMap[uuid]) return;
 
-        var icon = waitingIcons.getFirstDead();
-        var x = xPosToX(pos[0])-20;
-        var y = yPosToY(pos[1])-20;
+          console.log("marking as choosing");
 
-        if (icon) {
-          icon.reset(x,y);
-          icon.alpha = 1;
-        } else {
-          icon = waitingIcons.create(x,y,'hourglass');
-        }
+          var icon = waitingIcons.getFirstDead();
+          var x = xPosToX(pos[0])-20;
+          var y = yPosToY(pos[1])-20;
 
-        game.add.tween(icon).to({y: y-10},500,Phaser.Easing.Default,true,0,Number.MAX_VALUE,true);
-        waitingMap[uuid] = icon;
+          if (icon) {
+            icon.reset(x,y);
+            icon.alpha = 1;
+          } else {
+            icon = waitingIcons.create(x,y,'hourglass');
+          }
+
+          game.add.tween(icon).to({y: y-10},500,Phaser.Easing.Default,true,0,Number.MAX_VALUE,true);
+          waitingMap[uuid] = icon;
+        });
       }
 
       var markAsWaiting = function(uuid) {
@@ -163,6 +151,14 @@ $(function() {
             img.kill();
           });
         delete waitingMap[uuid];
+      }
+
+      var markAllWaiting = function() {
+        $.each(waitingMap, function(uuid,_) {
+          markAsWaiting(uuid);
+        });
+        waitingMap = {};
+        choosingUuids = [];
       }
 
       faye.subscribe('/room_events/waiting', function(payload) {
@@ -200,6 +196,10 @@ $(function() {
       faye.subscribe('/room_events/advance', function(payload) {
         console.log('advance! '+payload);
         var data = JSON.parse(payload);
+        turnCount = data.current_round+1;
+        var stillThisRound = function() {
+          return turnCount == data.current_round+1;
+        }
 
         //TODO: Abstract out
         var hRound = resourceFromJSON(data.halRound);
@@ -208,13 +208,7 @@ $(function() {
           return (participant.props.uuid == player_uuid);
         })[0];
 
-        if(hPlayer !== undefined) {
-          loadGlowsForParticipant(hPlayer);
-        }
-
-        $.each(waitingMap, function(uuid,_) {
-          markAsWaiting(uuid);
-        });
+        markAllWaiting();
 
         var numOfPlayers = 0;
         for (k in data.players) {
@@ -228,8 +222,7 @@ $(function() {
           playerPosMap[uuid] = pos;
           console.log(data.players);
         });
-        console.log('new pos map - '+JSON.stringify(playerPosMap))
-        turnCount = data.current_round+1;
+        console.log('new pos map - '+JSON.stringify(playerPosMap));
 
         $.each(playerPosMap, function(uuid, soulData) {
           var soul = souls.filter(function(s,i,group) {
@@ -246,11 +239,17 @@ $(function() {
           }
         });
 
-        if(turnTween !== undefined) {
-          turnTween.stop();
-          var fromAlpha = background.alpha/2;
-          background.alpha = 1;
-          turnTween = game.add.tween(background).from({alpha: fromAlpha},200,Phaser.Easing.Circular.Out,true);
+        if(hPlayer !== undefined) {
+          selectionOverlay.loadGlowsForParticipant(hPlayer).then(function(val){
+            if(stillThisRound()) {
+              return val;
+            } else {
+              throw new Error("Selection made after round ended!");
+            }
+          }).then(function(val) {
+            displayAllChoosing();
+            return val;
+          }).done();
         }
 
         $.each(souls.filter(function(s,i,group) {
@@ -263,7 +262,7 @@ $(function() {
             isDead = true;
             turnTween.stop();
             background.alpha = 1;
-            game.input.onUp.add(function(p){
+            game.input.onUp.add(function(p) {
               location.reload();
             },this);
             game.stage.backgroundColor = '#FF0000';
@@ -286,6 +285,10 @@ $(function() {
             turnTween = game.add.tween(background).to({alpha: 0.0},4600,Phaser.Easing.Circular.In,true);
           }
           if(turnTween !== undefined) {
+            turnTween.stop();
+            var fromAlpha = background.alpha/2;
+            background.alpha = 1;
+            turnTween = game.add.tween(background).from({alpha: fromAlpha},200,Phaser.Easing.Circular.Out,true);
             turnTween.onComplete.add(doTween);
           } else {
             doTween();
@@ -293,7 +296,8 @@ $(function() {
         }
       });
 
-      loadGlowsForParticipant(resourceFromJSON(window._divided_participant));
+      var initialParticipant = resourceFromJSON(window._divided_participant);
+      selectionOverlay.loadGlowsForParticipant(initialParticipant).done();
     },
     update: function(){
     }

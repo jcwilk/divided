@@ -1,6 +1,6 @@
 window.divided?= {}
 selectionOverlay = (options) ->
-  {xPosToX,yPosToY,extConfig} = options
+  {xPosToX,yPosToY,extConfig,game} = options
 
   getText = (content,xPos,yPos) ->
     x = xPosToX(xPos)
@@ -24,8 +24,8 @@ selectionOverlay = (options) ->
     x = xPosToX(xPos)
     y = yPosToY(yPos)
     glow = obj.getGlow(x,y)
-
     blink = null
+
     tweenForIndex = (rotationIndex) ->
       action = rotation[rotationIndex % rotation.length]
 
@@ -59,13 +59,17 @@ selectionOverlay = (options) ->
 
   mm = window.divided.moveMatrix()
 
+  deferredSelection = null
+
   obj = {
+    game: game
+    glows: game.add.group()
+    popups: game.add.group()
     at: (x,y) ->
       mm.at(x,y)
     setGame: (game) ->
       obj.game = game
-      obj.glows = game.add.group()
-      obj.popups = game.add.group()
+      obj
     getGlow: (x,y) ->
       g = obj.glows.getFirstDead()
       if g
@@ -81,8 +85,13 @@ selectionOverlay = (options) ->
     reset: () ->
       mm = window.divided.moveMatrix()
       obj.clearGlows()
+      deferredSelection = null
     drawMatrixGlows: () ->
       console.log(mm.all)
+      if deferredSelection?
+        deferredSelection.reject(new Error("No selection!"))
+      currentDefer = Q.defer()
+      deferredSelection = currentDefer
       $.each mm.all, (i,at) ->
         glow = glowForActionsAtPos(Object.keys(at.moves),at.x,at.y)
         glow.inputEnabled = true
@@ -90,6 +99,7 @@ selectionOverlay = (options) ->
           obj.clearGlows()
 
           postToUrl = (u) ->
+            currentDefer.resolve(u)
             $.ajax(u, {
               type: "POST",
               statusCode: {
@@ -119,7 +129,24 @@ selectionOverlay = (options) ->
               subGlow = glowForActionsAtPos([name], at.x+offset[0], at.y+offset[1])
               subGlow.inputEnabled = true
               subGlow.events.onInputUp.add((t) ->
+                obj.clearGlows()
                 postToUrl(url)
               this)
+      return currentDefer
+    loadGlowsForParticipant: (participant) ->
+      obj.reset()
+      promise = (participant.links['dv:moves'].fetch().then((moves) ->
+        $.each moves.embedded.moves, (i,move) ->
+          newMoves = {}
+          newMoves[move.props.action] = move.url()
+          obj.at(move.props.x,move.props.y).addMoves(newMoves);
+
+        return obj.drawMatrixGlows().promise
+      ).catch (error) ->
+        console.log("Failed promise!")
+        console.log(error)
+        console.log(error.stack)
+      )
+      return promise
   }
 window.divided.selectionOverlay = selectionOverlay

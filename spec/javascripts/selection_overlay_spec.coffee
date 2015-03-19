@@ -5,6 +5,11 @@ describe "Selection Overlay", () ->
     xPosToX: (x,y) -> [x,y]
     yPosToY: (x,y) -> [x,y]
     extConfig: {blinkDelay: 100}
+    game: {
+      add: {
+        group: () -> "new_group"
+      }
+    }
   }
   so = null
 
@@ -13,3 +18,7 @@ describe "Selection Overlay", () ->
 
   it "returns an object", () ->
     expect(so).toEqual(jasmine.any(Object))
+
+  it "initializes groups on creation", () ->
+    expect(so.popups).toEqual("new_group")
+    expect(so.glows).toEqual("new_group")
