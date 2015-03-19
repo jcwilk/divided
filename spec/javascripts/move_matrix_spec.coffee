@@ -4,7 +4,7 @@ describe "Move Matrix", () ->
   mm = null
 
   beforeEach () ->
-    mm = window.MoveMatrix()
+    mm = window.divided.moveMatrix()
 
   describe "at", () ->
     describe "when there are other `at` scope instances", () ->

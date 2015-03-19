@@ -53,10 +53,10 @@ $(function() {
   var FACE_HEIGHT = 32;
   var TILE_SIZE = 40;
 
-  var mm = window.divided.moveMatrix();
   var selectionOverlay = window.divided.selectionOverlay({
-    xPosToX: xPosToX,
-    yPosToY: yPosToY
+    xPosToX:   xPosToX,
+    yPosToY:   yPosToY,
+    extConfig: sliderContainer
   });
 
   var newWaitingDoom = function(xPos,yPos,uuid){
@@ -81,116 +81,24 @@ $(function() {
     return res;
   }
 
-  var clearGlows = selectionOverlay.clearGlows;
-  var textToPos  = selectionOverlay.getText;
-  var getGlow    = selectionOverlay.getGlow;
-
-  var glowForActionsAtPos = function(rotation,xPos,yPos) {
-    var x = xPosToX(xPos);
-    var y = yPosToY(yPos);
-    var glow = getGlow(x,y);
-
-    var blink;
-    var tweenForIndex = function(rotationIndex) {
-      var action = rotation[rotationIndex % rotation.length];
-
-      if(action == 'attack') {
-        glow.frame = 0
-      } else {
-        glow.frame = 1
-      }
-
-      var text = textToPos(action.toUpperCase(), xPos, yPos);
-
-      blink = game.add.tween(glow).to({alpha: 0.4},sliderContainer.blinkDelay/rotation.length,Phaser.Easing.Circular.Out,true);
-      blink.onComplete.add(function() {
-        blink = game.add.tween(glow).to({alpha: 0.0},sliderContainer.blinkDelay/rotation.length,Phaser.Easing.Circular.In,true);
-        blink.onComplete.add(function() {
-          text.destroy();
-          tweenForIndex(rotationIndex+1);
-        });
-      });
-    }
-    tweenForIndex(0);
-
-    var isDying = false;
-    glow.fadeAndKill = function() {
-      if(isDying) return;
-      isDying = true;
-
-      //blink.onComplete.removeAll();
-      blink.stop();
-      glow.events.onInputUp.removeAll();
-      game.add.tween(glow).to({alpha: 0.0},sliderContainer.blinkDelay*(glow.alpha/0.4),Phaser.Easing.Quadratic.InOut,true,0)
-        .onComplete.add(function() {
-          glow.kill();
-        });
-    }
-    return glow;
-  }
-
-  var drawMatrixGlows = function() {
-    console.log(mm.all);
-    $.each(mm.all, function(i,at) {
-      var glow = glowForActionsAtPos(Object.keys(at.moves),at.x,at.y);
-      glow.inputEnabled = true;
-      glow.events.onInputUp.add(function(g) {
-        clearGlows();
-
-        var postToUrl = function(u) {
-          $.ajax(u, {
-            type: "POST",
-            statusCode: {
-              422: function (response) {
-                //TODO: move this up out of the POST
-                //game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
-              },
-              500: function (response) {
-                 location.reload();
-              },
-              403: function (response) {
-                //TODO: auth lol
-                //location.reload();
-              }
-            }
-          });
-        }
-
-        if(Object.keys(at.moves).length == 1) {
-          postToUrl(at.moves[Object.keys(at.moves)[0]]);
-        } else {
-          var offsets = [
-            [+1,+1],
-            [-1,+1],
-            [+1,-1],
-            [-1,-1]
-          ]
-          $.each(at.moves, function(name, url) {
-            var offset = offsets.pop();
-            var subGlow = glowForActionsAtPos([name], at.x+offset[0], at.y+offset[1]);
-            subGlow.inputEnabled = true;
-            subGlow.events.onInputUp.add(function(t) {
-              postToUrl(url);
-            }, this);
-          });
-        }
-      });
-    });
-  }
-
   var loadGlowsForParticipant = function(participant) {
-    mm = window.divided.moveMatrix();
-    clearGlows();
+    selectionOverlay.reset();
 
-    participant.links['dv:moves'].fetch().then(function (moves) {
+    participant.links['dv:moves'].fetch().then(function(moves) {
       $.each(moves.embedded.moves, function(i,move) {
         var newMoves = {}
         newMoves[move.props.action] = move.url()
-        mm.at(move.props.x,move.props.y).addMoves(newMoves);
+        selectionOverlay.at(move.props.x,move.props.y).addMoves(newMoves);
       })
 
-      drawMatrixGlows();
-    });
+      selectionOverlay.drawMatrixGlows();
+    })
+    .catch(function(error) {
+      console.log("Failed promise!")
+      console.log(error);
+      console.log(error.stack);
+    })
+    .done();
   }
 
   var game = new Phaser.Game(800, 600, Phaser.AUTO, 'divided-viewport', {
