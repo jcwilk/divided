@@ -10,7 +10,11 @@ module DV
       end
 
       link 'dv:current_round' do |opts|
-        build_url(opts,"/dv/current_round")
+        build_url(opts,"/dv/current_round") #TODO: room specific
+      end
+
+      link 'dv:join' do |opts|
+        build_url(opts,"/dv/join") #TODO: room specific
       end
     end
   end
