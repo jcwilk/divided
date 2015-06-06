@@ -41,8 +41,6 @@ $(function() {
 
   var faye = new Faye.Client('/faye');
 
-  var player;
-  console.log(first_move);
   var souls, waitingIcons;
   var isPointerDown = false;
   var isDead = false;
@@ -67,6 +65,13 @@ $(function() {
     doom.currentPos = [xPos,yPos];
     doom.uuid = uuid;
 
+    if(uuid === player_uuid) {
+      doom.blip = game.add.sprite(14.5,-5,'player_blip',false);
+      doom.blip.anchor.setTo(0.5);
+      doom.addChild(doom.blip);
+      loadingText.destroy();
+    }
+
     return doom;
   }
 
@@ -77,8 +82,13 @@ $(function() {
     return res;
   }
 
+  var loadingTextStyle = { font: "40px Arial", fill: "#ffffff", align: "center" };
+  var loadingText;
+
   var game = new Phaser.Game(800, 600, Phaser.AUTO, 'divided-viewport', {
     preload: function() {
+      loadingText = game.add.text(game.world.centerX, game.world.centerY, "Loading assets...", loadingTextStyle);
+      loadingText.anchor.set(0.5);
       <%= %w(starfield.jpg slate_flooring_40x40.png 2x2brown40x40.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       game.load.spritesheet('doomfaces', <%= asset_path('doomfaces.png').inspect %>, FACE_WIDTH, FACE_HEIGHT, 42);
       game.load.spritesheet('lost_soul_basic', <%= asset_path('lost_soul_basic.png').inspect %>, 104, 90, 8);
@@ -95,6 +105,10 @@ $(function() {
       walls.add(game.add.tileSprite(600,100,40,400,'slate_flooring_40x40'));
       floor = game.add.tileSprite(200,100,400,400,'2x2brown40x40');
 
+      loadingText.destroy();
+      loadingText = game.add.text(game.world.centerX, game.world.centerY, "Waiting to join...", loadingTextStyle);
+      loadingText.anchor.set(0.5);
+
       souls = game.add.group();
       waitingIcons = game.add.group();
 
@@ -104,12 +118,6 @@ $(function() {
         extConfig: sliderContainer,
         game: game
       });
-
-      player = newWaitingDoom(first_move[0],first_move[1],player_uuid);
-
-      player.blip = game.add.sprite(14.5,-5,'player_blip',false);
-      player.blip.anchor.setTo(0.5);
-      player.addChild(player.blip);
 
       var waitingMap = {};
       var choosingUuids = [];
@@ -121,8 +129,6 @@ $(function() {
         $.each($.unique(choosingUuids), function(i, uuid) {
           var pos = playerPosMap[uuid];
           if(!pos || waitingMap[uuid]) return;
-
-          console.log("marking as choosing");
 
           var icon = waitingIcons.getFirstDead();
           var x = xPosToX(pos[0])-20;
@@ -141,10 +147,8 @@ $(function() {
       }
 
       var markAsWaiting = function(uuid) {
-        console.log("marking as waiting");
         var img = waitingMap[uuid];
         if(!img) return;
-        console.log('killing');
         game.add.tween(img)
           .to({y: img.y-20, alpha: 0},200,Phaser.Easing.Default,true)
           .onComplete.add(function(){
@@ -162,10 +166,8 @@ $(function() {
       }
 
       faye.subscribe('/room_events/waiting', function(payload) {
-        console.log('waiting: '+payload);
         var data = JSON.parse(payload);
         if (data.current_round == turnCount) {
-          console.log('marking');
           markAsWaiting(data.player_uuid);
         }
       });
@@ -220,7 +222,6 @@ $(function() {
 
         $.each(data.players, function(uuid,pos) {
           playerPosMap[uuid] = pos;
-          console.log(data.players);
         });
         console.log('new pos map - '+JSON.stringify(playerPosMap));
 
@@ -258,6 +259,7 @@ $(function() {
           soul.animations.stop();
           markAsWaiting(soul.uuid);
           delete playerPosMap[soul.uuid];
+
           if(soul.uuid === player_uuid) {
             isDead = true;
             turnTween.stop();
@@ -292,10 +294,24 @@ $(function() {
             doTween();
           }
         }
+      }).then(function(){
+        //faye subscription to turn advancement is now active
+        var room = resourceFromJSON(window._divided_room);
+        $.ajax({
+          url: room.links['dv:join'].url(),
+          headers: {
+              'Uuid': player_uuid
+          },
+          method: 'POST',
+          success: function(data){
+            console.log('joined: '+data);
+            //debugger;
+          },
+          error: function(error){
+            //debugger
+          }
+        });
       });
-
-      var initialParticipant = resourceFromJSON(window._divided_participant);
-      selectionOverlay.selectionForParticipant(initialParticipant).done();
     },
     update: function(){
     }

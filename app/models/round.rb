@@ -80,6 +80,10 @@ class Round
       RoomEventsController.publish('/room_events/waiting', {player_uuid: player.uuid,current_round: index}.to_json)
     else
       Round.advance
+
+      #TODO: replace with this:
+      #EM.next_tick { Round.advance }
+      # This is much harder to test though :(
     end
 
     true
@@ -95,8 +99,6 @@ class Round
   end
 
   def start
-    return if participating_players.blank?
-
     curr_index = index
     EM.add_timer(ROUND_DURATION) do
       Round.advance if Round.current_number == curr_index
@@ -122,6 +124,7 @@ class Round
     new_players_pos_map[player] = get_starting_move
 
     #TODO: should advanced only happen in later ticks?
+    #TODO: this is redundant with add_move
     Round.advance if unsettled_players.empty?
   end
 

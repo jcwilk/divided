@@ -12,5 +12,5 @@
         .slider{:'data-variable' => name, :'data-default' => default}
       %td{:id => "#{name}-display"}= default
       %td= default
-%script{:type=>"text/javascript"}= "window._divided_player_uuid = #{@player_uuid.inspect}; window._divided_first_move = JSON.parse(#{@first_move.inspect}); window._divided_participant = JSON.parse(#{@participant.inspect})".html_safe
+%script{:type=>"text/javascript"}= "window._divided_player_uuid = #{@player_uuid.inspect}; window._divided_room = JSON.parse(#{@room.inspect})".html_safe
 = javascript_include_tag 'html5'
