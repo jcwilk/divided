@@ -1,6 +1,6 @@
 class Round
   ROUND_DURATION = 5 #seconds
-  STATIONARY_EXPIRE_COUNT = 5 #rounds
+  STATIONARY_EXPIRE_COUNT = 10 #rounds
 
   class << self
     delegate :move_map, :current_data,
