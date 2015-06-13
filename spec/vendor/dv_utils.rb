@@ -29,5 +29,9 @@ module DvUtils
     def get_participant_by_uuid(uuid)
       current_round.participants.find {|p| p.uuid == uuid }
     end
+
+    def finish_after_round(&block)
+      finish_in(Round::ROUND_DURATION+1,&block)
+    end
   end
 end

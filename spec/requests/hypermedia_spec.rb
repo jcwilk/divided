@@ -3,14 +3,6 @@ require 'rails_helper'
 describe 'divided hypermedia' do
   #TODO: as this grows, split it into separate files
 
-  def app
-    Divided::Application
-  end
-
-  def finish_after_round(&block)
-    finish_in(Round::ROUND_DURATION+1,&block)
-  end
-
   describe 'utlities' do
     describe 'rendering an object' do
       subject { DV::Representers::Round.render(Round.current_round) }
