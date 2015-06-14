@@ -51,6 +51,8 @@ RSpec.configure do |config|
   require 'vendor/dv_utils'
   config.include(DvUtils::Mixin)
 
+  require 'vendor/game_runner'
+
 # The settings below are suggested to provide a good initial experience
 # with RSpec, but feel free to customize to your heart's content.
 

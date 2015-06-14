@@ -2,19 +2,13 @@ class EMSpecRunner
   module Mixin
     def self.included(base)
       base.extend(ClassMethods)
+      base.delegate :finish, :finish_in, :deferred_finish,
+        to: :@runner
     end
 
     def run(&block)
       @runner = EMSpecRunner.new
       @runner.run(&block)
-    end
-
-    def finish(&block)
-      @runner.finish(&block)
-    end
-
-    def finish_in(seconds, &block)
-      @runner.finish_in(seconds, &block)
     end
 
     def published_messages
@@ -100,5 +94,11 @@ class EMSpecRunner
       block.call if block
       EM.stop
     end
+  end
+
+  #NB: This could cause the spec to hang, don't use this
+  # unless you're certain it will eventually stop
+  def deferred_finish
+     @explicit_finish = true
   end
 end
