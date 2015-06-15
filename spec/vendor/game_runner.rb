@@ -20,7 +20,6 @@ class GameRunner
 
     time_poller = Proc.new do
       if Round.current_round != last_round
-        puts 'new_round'
         last_round = Round.current_round
         next_proc = @pending_rounds.shift
         if next_proc
@@ -54,9 +53,21 @@ class GameRunner
     end
   end
 
-  def find(player)
+  def locate(player)
     in_spec do
       last_published_round.players[player.uuid]
+    end
+  end
+
+  def participating?(player)
+    in_spec do
+      !!get_participant_by_uuid(player.uuid)
+    end
+  end
+
+  def killed
+    in_spec do
+      last_published_round['killed']
     end
   end
 
