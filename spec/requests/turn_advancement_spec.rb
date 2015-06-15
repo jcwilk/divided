@@ -8,72 +8,58 @@ describe "move submission" do
   em_around
 
   context 'as a single player' do
-    before do
-      allow_any_instance_of(Round).to receive(:get_starting_move).and_return(starting_move)
-      Round.current_round.join(p1)
-      @player = p1
-    end
-
-    def move(x,y,options = {})
-      m = fetch_move(x,y,options)
-      fail "no move matches #{x},#{y}" if m.nil?
-      m.post
-    end
-
-    def attack(x,v,options = {})
-      move(options.merge(action: 'attack'))
-    end
-
-    def fetch_move(x,y,action: 'run', p: @player)
-      available_moves(p.uuid).find {|i| i.action == action && i.x == x && i.y == y }
-    end
-
-    def last_published_move
-      last_published_round.players
-    end
-
-    def last_published_player_move
-      last_published_move[@player.uuid]
-    end
+    let!(:game) {
+      GameRunner.new(self, {
+        p1 => [0,0]
+      })
+    }
 
     it 'allows a move 3 tiles away' do
-      r=move(3,3)
-      expect(r.response.status).to eql(201)
-      expect(last_published_player_move).to eql([3,3])
+      game.next_round do |r|
+        r.choose(p1).run(3,3)
+      end
+
+      game.next_round do |r|
+        expect(r.locate(p1)).to eql([3,3])
+      end
     end
 
     it 'does not permit a move to be posted twice' do
-      r=fetch_move(3,3)
-      r.post
-      expect { r.post rescue nil }.not_to change { last_published_round }
+      move = nil
+      game.next_round do |r|
+        move = available_moves(p1.uuid).find {|i| i.action == 'run' && i.x == 0 && i.y == 0 }
+        move.post
+      end
+
+      game.next_round do |r|
+        expect { move.post }.to raise_error
+      end
     end
 
     it 'does not allow a move 4 tiles away' do
-      expect(fetch_move(3,4)).to be_nil
+      game.next_round do |r|
+        expect { r.choose(p1).run(4,4) }.to raise_error
+      end
     end
 
     it 'does not allow a move out of bounds' do
-      expect(fetch_move(-1,0)).to be_nil
+      game.next_round do |r|
+        expect { r.choose(p1).run(-1,0) }.to raise_error
+      end
     end
 
     context 'if the player idles for too many rounds in a row' do
-      def wait_too_long(&block)
-        finish_in((Round::STATIONARY_EXPIRE_COUNT+1)*Round::ROUND_DURATION) do
-          block.call
+      before do
+        Round::STATIONARY_EXPIRE_COUNT.times do
+          game.next_round do |r|
+            #wait
+          end
         end
       end
 
       it 'kills the player' do
-        proc = Proc.new do
-          move(0,0) rescue nil
-          EM.add_timer(3,&proc)
-        end
-        EM.add_timer(3,&proc)
-        wait_too_long do
-          kill = published_advances.find do |pub|
-            JSON.parse(pub[1])['killed'].include?(@player.uuid)
-          end
-          expect(kill).to be_present
+        game.next_round do |r|
+          expect(r.killed).to eql([p1.uuid])
         end
       end
     end
