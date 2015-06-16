@@ -28,8 +28,8 @@ describe MoveGenerator do
         enemy => [2,2]
       }}
 
-      pending 'does not include a run action for the enemy occupied tile' do
-        expect(subject.any? {|m| m.x == 2 && m.y == 2 && m.action == 'run' }).to eql(false)
+      it 'does not include actions for the enemy occupied tile' do
+        expect(subject.any? {|m| m.x == 2 && m.y == 2 }).to eql(false)
       end
 
       it 'includes attack actions for the tiles adjacent to the enemy' do

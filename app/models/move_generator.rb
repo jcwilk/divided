@@ -37,18 +37,20 @@ class MoveGenerator
 
   def tentative_move_data_for_xy(x,y)
     [].tap do |tentatives|
-      tentatives << {
-        x: x,
-        y: y,
-        action: 'run'
-      }
-
-      if init_pos_map.any? {|k,v| (v[0] - x).abs <= 1 && (v[1] - y).abs <= 1 && k != player }
+      if !init_pos_map.any? {|k,v| v == [x,y] && k != player }
         tentatives << {
           x: x,
           y: y,
-          action: 'attack'
+          action: 'run'
         }
+
+        if init_pos_map.any? {|k,v| (v[0] - x).abs <= 1 && (v[1] - y).abs <= 1 && k != player }
+          tentatives << {
+            x: x,
+            y: y,
+            action: 'attack'
+          }
+        end
       end
     end
   end
