@@ -1,80 +1,9 @@
 class Participant < Hashie::Dash
-  class Move < Hashie::Dash
-    property :player_uuid, required: true
-    property :x, required: true
-    property :y, required: true
-    property :id, required: true
-    property :round_id, required: true
-    property :action, required: true
-
-    def valid?
-      x >= 0 && x <= 9 &&
-        y >= 0 && y <= 9
-    end
-  end
-
-  class MoveGenerator
-    delegate :round, :player, :round_id, :uuid, to: :participant
-
-    attr_reader :participant, :next_id, :moves
-    private :next_id
-
-    def initialize(participant:)
-      @participant = participant
-      @next_id = 0
-      @moves = []
-    end
-
-    def add_attack(options)
-      add_move(options.merge(action: 'attack'))
-    end
-
-    def add_run(options)
-      add_move(options.merge(action: 'run'))
-    end
-
-    private
-
-    def advance_id
-      @next_id+= 1
-    end
-
-    def add_move(options)
-      m = Move.new({
-        player_uuid: uuid,
-        id:          next_id,
-        round_id:    round_id
-      }.merge(options))
-      if m.valid?
-        advance_id
-        moves << m
-      else
-        false
-      end
-    end
-  end
-
   property :player, required: true
   property :round,  required: true
 
   delegate :uuid, to: :player
-
-  def moves
-    @moves ||= begin
-      gen = MoveGenerator.new(participant: self)
-      x,y = init_pos
-      ((x-3)..(x+3)).each do |xi|
-        ((y-3)..(y+3)).each do |yi|
-          gen.add_run(x: xi, y: yi)
-
-          if near_other_players?(xi,yi)
-            gen.add_attack(x: xi, y: yi)
-          end
-        end
-      end
-      gen.moves
-    end
-  end
+  delegate :moves, to: :move_generator
 
   def default_move
     m = moves
@@ -96,6 +25,10 @@ class Participant < Hashie::Dash
   end
 
   private
+
+  def move_generator
+    MoveGenerator.new(player: player, round: round)
+  end
 
   def init_pos
     round.init_pos_map[player]

@@ -6,15 +6,15 @@ describe 'collisions between players' do
 
   em_around
 
-  context 'with two players 2 tiles apart' do
+  context 'with two players 1 tiles apart' do
     let(:game) {
       GameRunner.new(self, {
         p1 => [0,0],
-        p2 => [0,3]
+        p2 => [0,2]
       })
     }
 
-    context 'when a player tries to move onto another player' do
+    context 'when a player tries to move past another player' do
       before do
         game.next_round do |r|
           r.choose(p1).run(0,3)
