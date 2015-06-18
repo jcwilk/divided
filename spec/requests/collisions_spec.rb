@@ -24,8 +24,22 @@ describe 'collisions between players' do
       it 'the player stops in front of them' do
         game.next_round do |r|
           end_at = r.locate(p1)
-          #TODO: needs impl
-          #expect(end_at).to eql([0,2])
+          expect(end_at).to eql([0,1])
+        end
+      end
+
+      context 'and the player then moves away' do
+        before do
+          game.next_round do |r|
+            r.choose(p1).run(0,0)
+          end
+        end
+
+        it 'permits the move' do
+          game.next_round do |r|
+            end_at = r.locate(p1)
+            expect(end_at).to eql([0,0])
+          end
         end
       end
     end

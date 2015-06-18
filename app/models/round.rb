@@ -142,7 +142,7 @@ class Round
   end
 
   def final_pos_map
-    total_move_map.reduce(new_players_pos_map) {|a,(k,v)| a.reverse_merge(k => [v.x,v.y]) }
+    new_players_pos_map.merge(collided_move_map)
   end
 
   def stationary_too_long?(options)
@@ -185,13 +185,18 @@ class Round
     default_move_map.merge(settled_move_map)
   end
 
-  # def distance_moved(player)
-  #   old = last_move_map[player]
-  #   nu = recent_move_map[player]
-  #   return 0 if old.nil? || nu.nil?
+  def collided_move_map
+    sim = CollisionSimulator.new
+    total_move_map.reduce({}) {|a,(k,v)| a.reverse_merge(k => [v.x,v.y]) }.tap do |m|
+      m.each do |uuid,pos|
+        sim.add_participant(initial: init_pos_map[uuid], final: pos, id: uuid)
+      end
 
-  #   [(old[0]-nu[0]).abs,(old[1]-nu[1]).abs].max
-  # end
+      sim.collisions.each do |c|
+        m[c[:id]] = c[:final]
+      end
+    end
+  end
 
   def get_starting_move
     counter = self.class.next_participant_counter
