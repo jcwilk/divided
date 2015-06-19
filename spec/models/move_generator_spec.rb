@@ -35,6 +35,26 @@ describe MoveGenerator do
       it 'includes attack actions for the tiles adjacent to the enemy' do
         expect(subject.any? {|m| m.x == 1 && m.y == 3 && m.action == 'attack' }).to eql(true)
       end
+
+      context 'when the collision sim does not return collisions' do
+        before do
+          allow_any_instance_of(CollisionSimulator).to receive(:collisions).and_return([])
+        end
+
+        it 'returns moves on the other side of the enemy' do
+          expect(subject.any? {|m| m.x == 3 && m.y == 3 }).to eql(true)
+        end
+      end
+
+      context 'when the collision sim does return collisions' do
+        it 'does not return moves on the other side of the enemy' do
+          expect(subject.any? {|m| m.x == 3 && m.y == 3 }).to eql(false)
+        end
+
+        it 'does return moves in front of the enemy' do
+          expect(subject.any? {|m| m.x == 1 && m.y == 1 }).to eql(true)
+        end
+      end
     end
   end
 end

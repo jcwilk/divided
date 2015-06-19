@@ -10,7 +10,7 @@ describe 'collisions between players' do
     let(:game) {
       GameRunner.new(self, {
         p1 => [0,0],
-        p2 => [0,2]
+        p2 => [1,3]
       })
     }
 
@@ -18,13 +18,14 @@ describe 'collisions between players' do
       before do
         game.next_round do |r|
           r.choose(p1).run(0,3)
+          r.choose(p2).run(0,3)
         end
       end
 
       it 'the player stops in front of them' do
         game.next_round do |r|
           end_at = r.locate(p1)
-          expect(end_at).to eql([0,1])
+          expect(end_at).to eql([0,2])
         end
       end
 
