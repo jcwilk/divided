@@ -50,4 +50,21 @@ describe CollisionSimulator do
       expect(subject.first[:final]).to eql([0,2])
     end
   end
+
+  context 'with participants moving to the same tile symmetrically' do
+    let(:participant_data) {[
+      {initial: [0,0], final: [3,0], id: 'first'},
+      {initial: [6,0], final: [3,0], id: 'second'}
+    ]}
+
+    it 'results in only one collision' do
+      expect(subject.size).to eql(1)
+    end
+
+    it 'results with one participant next to the other' do
+      collided_id = subject.first[:id]
+      non_collided = participant_data.find {|d| d[:id] != collided_id }
+      expect((subject.first[:final][0]-non_collided[:final][0]).abs).to eql(1)
+    end
+  end
 end

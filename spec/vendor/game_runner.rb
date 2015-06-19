@@ -30,7 +30,7 @@ class GameRunner
           end
         end
       end
-      EM.add_timer(1,&time_poller)
+      EM.add_timer(0.5,&time_poller)
     end
     EM.next_tick(&time_poller)
 

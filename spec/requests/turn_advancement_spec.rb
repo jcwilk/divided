@@ -14,6 +14,19 @@ describe "move submission" do
       })
     }
 
+    it 'allows moves to happen immediately' do
+      first_turn_time = nil
+
+      game.next_round do |r|
+        first_turn_time = Time.now
+        r.choose(p1).run(3,3)
+      end
+
+      game.next_round do |r|
+        expect(Time.now - first_turn_time).to be < 1.second
+      end
+    end
+
     it 'allows a move 3 tiles away' do
       game.next_round do |r|
         r.choose(p1).run(3,3)
@@ -60,6 +73,50 @@ describe "move submission" do
       it 'kills the player' do
         game.next_round do |r|
           expect(r.killed).to eql([p1.uuid])
+        end
+      end
+    end
+  end
+
+  context 'as a player alongside an idling player' do
+    let(:p2) { Player.new_active }
+    let!(:game) {
+      GameRunner.new(self, {
+        p1 => [3,3],
+        p2 => [0,0]
+      })
+    }
+
+    it 'delays the turn for the full round duration' do
+      first_turn_time = nil
+
+      game.next_round do |r|
+        first_turn_time = Time.now
+        r.choose(p1).run(3,4)
+      end
+
+      game.next_round do |r|
+        # -1 due to lack of runner precision
+        expect(Time.now - first_turn_time).to be > Round::ROUND_DURATION-1
+      end
+    end
+
+    context 'if the idling player chooses mid round, after the first player' do
+      it 'delays for only that long' do
+        first_turn_time = nil
+
+        game.next_round do |r|
+          first_turn_time = Time.now
+          r.choose(p1).run(3,4)
+          EM.add_timer(2.5) do
+            r.choose(p2).run(1,1)
+          end
+        end
+
+        game.next_round do |r|
+          # Accounting for runner imprecision
+          expect(Time.now - first_turn_time).to be > 1.5
+          expect(Time.now - first_turn_time).to be < 3.5
         end
       end
     end

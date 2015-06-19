@@ -187,7 +187,7 @@ class Round
 
   def collided_move_map
     sim = CollisionSimulator.new
-    total_move_map.reduce({}) {|a,(k,v)| a.reverse_merge(k => [v.x,v.y]) }.tap do |m|
+    total_move_map.reduce({}) {|a,(k,v)| a.merge(k => [v.x,v.y]) }.tap do |m|
       m.each do |uuid,pos|
         sim.add_participant(initial: init_pos_map[uuid], final: pos, id: uuid)
       end

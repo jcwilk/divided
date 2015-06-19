@@ -1,6 +1,6 @@
 class CollisionSimulator
   VERTICAL = :vertical #slope going straight up and down
-  RESOLUTION = 7 #how many time slices to check for collisions
+  RESOLUTION = 10 #how many time slices to check for collisions
 
   def initialize
     @participants = []
@@ -20,13 +20,12 @@ class CollisionSimulator
   def collisions
     found = []
     moving = @participants.select {|p| p[:slice_size] != 0 }
-    stationary_map = {}
-    (@participants - moving).each do |p|
-      stationary_map[p[:id]] = p[:initial]
+    current = {}
+    @participants.each do |p|
+      current[p[:id]] = p[:initial]
     end
 
     (0..RESOLUTION).each do |slice|
-      current = stationary_map.dup
       moving.each do |m|
         if m[:slope] == VERTICAL
           x = m[:initial][0]
@@ -35,25 +34,15 @@ class CollisionSimulator
           x = m[:initial][0]+m[:slice_size]*slice
           y = m[:initial][1]+m[:slope]*m[:slice_size]*slice
         end
-        current[m[:id]] = [x,y]
-      end
 
-      moving.each do |m|
-        others = current.dup
-        x,y = others.delete(m[:id])
-        collides = []
-        others.each do |id, (ox,oy)|
-          collides << id if (x-ox).abs <= 1 && (y-oy).abs <= 1
-        end
-        if collides.present?
-          collides+=[m[:id]]
-          collides.each do |c|
-            if mover = moving.find {|m| m[:id] == c }
-              found << {id: c, final: current[c].map(&:round)}
-              moving.delete(mover)
-              stationary_map[c] = current[c]
-            end
-          end
+        new_pos = [x.round,y.round]
+        others = current.select {|k,v| k != m[:id] }
+
+        if others.any? {|id,pos| pos == new_pos }
+          found << {id: m[:id], final: current[m[:id]]}
+          moving.delete(m)
+        else
+          current[m[:id]] = new_pos
         end
       end
     end
