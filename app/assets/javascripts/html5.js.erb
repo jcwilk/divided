@@ -86,6 +86,12 @@ $(function() {
   var loadingText;
 
   var game = new Phaser.Game(800, 600, Phaser.AUTO, 'divided-viewport', {
+    init: function() {
+      this.scale.scaleMode = Phaser.ScaleManager.NO_SCALE;
+      game.scale.pageAlignHorizontally = true;
+      game.scale.pageAlignVertically = true;
+      game.scale.refresh();
+    },
     preload: function() {
       loadingText = game.add.text(game.world.centerX, game.world.centerY, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
