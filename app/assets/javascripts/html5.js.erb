@@ -85,12 +85,19 @@ $(function() {
   var loadingTextStyle = { font: "40px Arial", fill: "#ffffff", align: "center" };
   var loadingText;
 
-  var game = new Phaser.Game(800, 600, Phaser.AUTO, 'divided-viewport', {
+  var game = new Phaser.Game(600, 600, Phaser.AUTO, 'divided-viewport', {
     init: function() {
-      this.scale.scaleMode = Phaser.ScaleManager.NO_SCALE;
+      game.scale.scaleMode = Phaser.ScaleManager.RESIZE;
       game.scale.pageAlignHorizontally = true;
       game.scale.pageAlignVertically = true;
+      game.world.setBounds(0,0,800,600);
+      game.camera.x = 100;
       game.scale.refresh();
+    },
+    resize: function(x,y) {
+      game.world.setBounds(0-(x-800)/2, 0-(y-600)/2, (x-800)/2+800, (y-600)/2+600);
+      game.camera.x = 0-(x-800)/2;
+      game.camera.y = 0-(y-600)/2;
     },
     preload: function() {
       loadingText = game.add.text(game.world.centerX, game.world.centerY, "Loading assets...", loadingTextStyle);
@@ -103,7 +110,7 @@ $(function() {
       game.load.image('player_blip', <%= asset_path('green_blip_19.png').inspect %>);
     },
     create: function(){
-      background = game.add.tileSprite(0, 0, 800, 600, 'starfield');
+      background = game.add.tileSprite(-1000, -1000, 3000, 3000, 'starfield');
       walls = game.add.group();
       walls.add(game.add.tileSprite(160,60,480,40,'slate_flooring_40x40'));
       walls.add(game.add.tileSprite(160,500,480,40,'slate_flooring_40x40'));
