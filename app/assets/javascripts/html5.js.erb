@@ -266,9 +266,10 @@ $(function() {
           }).done();
         }
 
-        $.each(souls.filter(function(s,i,group) {
+        var killedSouls = souls.filter(function(s,i,group) {
           return $.inArray(s.uuid,data.killed) > -1
-        }).list, function(i,soul) {
+        }).list;
+        $.each(killedSouls, function(i,soul) {
           soul.animations.stop();
           markAsWaiting(soul.uuid);
           delete playerPosMap[soul.uuid];
