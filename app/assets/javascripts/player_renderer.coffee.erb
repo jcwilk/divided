@@ -10,7 +10,8 @@ window.divided.playerRenderer = (options) ->
     souls,
     loadingText,
     directing_player_uuid,
-    playerPosMap
+    playerPosMap,
+    extConfig
   } = options
   
   waitingMap = {}
@@ -78,6 +79,24 @@ window.divided.playerRenderer = (options) ->
         game.add.tween(icon).to({y: y-10},500,Phaser.Easing.Default,true,0,Number.MAX_VALUE,true)
         waitingMap[uuid] = icon
       )
+    moveSprite: (sprite,nPos) ->
+      cPos = sprite.currentPos
+      if nPos[0] < cPos[0]
+        sprite.animations.stop()
+        sprite.animations.frame = 6
+      else if nPos[0] > cPos[0]
+        sprite.animations.stop()
+        sprite.animations.frame = 7
+      else
+        sprite.animations.play('waiting')
+
+      cPos[0] = nPos[0]
+      cPos[1] = nPos[1]
+
+      game.add.tween(sprite).to({
+        x: xPosToX(cPos[0])-sprite.width/2,
+        y: yPosToY(cPos[1])-sprite.height/2
+      }, extConfig.animationDuration, Phaser.Easing.Cubic.InOut, true)
   }
 
 window.divided.playerRenderer.preload = (game) ->

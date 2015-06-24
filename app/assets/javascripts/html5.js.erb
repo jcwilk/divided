@@ -115,7 +115,8 @@ $(function() {
         souls:                 souls,
         loadingText:           loadingText,
         directing_player_uuid: player_uuid,
-        playerPosMap:          playerPosMap
+        playerPosMap:          playerPosMap,
+        extConfig:             sliderContainer
       });
 
       faye.subscribe('/room_events/waiting', function(payload) {
@@ -124,29 +125,6 @@ $(function() {
           playerRenderer.markAsWaiting(data.player_uuid);
         }
       });
-
-      var moveSprite = function(sprite,nPos) {
-        var cPos = sprite.currentPos;
-        if (nPos[0] < cPos[0]) {
-          sprite.animations.stop();
-          sprite.animations.frame = 6;
-        }
-        else if (nPos[0] > cPos[0]) {
-          sprite.animations.stop();
-          sprite.animations.frame = 7;
-        }
-        else {
-          sprite.animations.play('waiting');
-        }
-
-        cPos[0] = nPos[0];
-        cPos[1] = nPos[1];
-
-        game.add.tween(sprite).to({
-          x: xPosToX(cPos[0])-sprite.width/2,
-          y: yPosToY(cPos[1])-sprite.height/2
-        }, sliderContainer.animationDuration, Phaser.Easing.Cubic.InOut, true);
-      }
 
       faye.subscribe('/room_events/advance', function(payload) {
         console.log('advance! '+payload);
@@ -183,7 +161,7 @@ $(function() {
               return s.alive && s.uuid == uuid
             }).first;
           if(soul){
-            moveSprite(soul,soulData);
+            playerRenderer.moveSprite(soul,soulData);
           } else {
             playerRenderer.newWaitingDoom(soulData[0],soulData[1],uuid);
           }
