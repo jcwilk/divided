@@ -115,7 +115,6 @@ $(function() {
         souls:                 souls,
         loadingText:           loadingText,
         directing_player_uuid: player_uuid,
-        playerPosMap:          playerPosMap,
         extConfig:             sliderContainer
       });
 
@@ -191,6 +190,7 @@ $(function() {
           soul.animations.stop();
           playerRenderer.markAsWaiting(soul.uuid);
           delete playerPosMap[soul.uuid];
+          soul.frame = 40;
 
           if(soul.uuid === player_uuid) {
             isDead = true;
@@ -202,15 +202,12 @@ $(function() {
             game.stage.backgroundColor = '#FF0000';
             game.add.tween(background).to({alpha: 0.0},100,Phaser.Easing.Circular.In,true)
               .onComplete.add(function(){
-                soul.frame = 40;
                 game.add.tween(background).to({alpha: 1.0},200,Phaser.Easing.Circular.Out,true)
                   .onComplete.add(function(){
                     game.stage.backgroundColor = '#880000';
                     game.add.tween(background).to({alpha: 0.0},10000,Phaser.Easing.Circular.Out,true);
                   });
               });
-          } else {
-            soul.frame = 40;
           }
         });
 

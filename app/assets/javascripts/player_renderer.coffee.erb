@@ -10,13 +10,13 @@ window.divided.playerRenderer = (options) ->
     souls,
     loadingText,
     directing_player_uuid,
-    playerPosMap,
     extConfig
   } = options
   
   waitingMap = {}
   choosingUuids = []
-  waitingIcons = game.add.group();
+  waitingIcons = game.add.group()
+  spritesByUuid = {}
 
   obj = {
     newWaitingDoom: (xPos,yPos,uuid) ->
@@ -30,6 +30,8 @@ window.divided.playerRenderer = (options) ->
       souls.add(doom)
       doom.currentPos = [xPos,yPos]
       doom.uuid = uuid
+
+      spritesByUuid[uuid] = doom
 
       if uuid == directing_player_uuid
         doom.blip = game.add.sprite(14.5,-5,'player_blip',false)
@@ -62,9 +64,11 @@ window.divided.playerRenderer = (options) ->
 
     displayAllChoosing: () ->
       $.each($.unique(choosingUuids), (i, uuid) ->
-        pos = playerPosMap[uuid]
-        if !pos || waitingMap[uuid]
+        sprite = spritesByUuid[uuid]
+        if !sprite || waitingMap[uuid]
           return
+
+        pos = sprite.currentPos
 
         icon = waitingIcons.getFirstDead()
         x = xPosToX(pos[0])-20
@@ -79,7 +83,8 @@ window.divided.playerRenderer = (options) ->
         game.add.tween(icon).to({y: y-10},500,Phaser.Easing.Default,true,0,Number.MAX_VALUE,true)
         waitingMap[uuid] = icon
       )
-    moveSprite: (sprite,nPos) ->
+    moveSprite: (uuid,nPos) ->
+      sprite = spritesByUuid[uuid]
       cPos = sprite.currentPos
       if nPos[0] < cPos[0]
         sprite.animations.stop()
@@ -97,6 +102,12 @@ window.divided.playerRenderer = (options) ->
         x: xPosToX(cPos[0])-sprite.width/2,
         y: yPosToY(cPos[1])-sprite.height/2
       }, extConfig.animationDuration, Phaser.Easing.Cubic.InOut, true)
+    isRenderingPlayer: (uuid) ->
+      spritesByUuid[uuid]?
+    killSprite: (uuid) ->
+      sprite = delete spritesByUuid[uuid]
+      sprite.animations.stop()
+      sprite.frame = 40
   }
 
 window.divided.playerRenderer.preload = (game) ->

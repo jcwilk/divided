@@ -7,11 +7,9 @@ window.divided.playerPool = (options) ->
     souls,
     loadingText,
     directing_player_uuid,
-    playerPosMap,
-    extConfig
+    extConfig,
+    onDirectingPlayerDeath
   } = options
-
-  spritesByUuid = {}
 
   obj = {
     renderer: window.divided.playerRenderer({
@@ -21,15 +19,21 @@ window.divided.playerPool = (options) ->
       souls:                 souls,
       loadingText:           loadingText,
       directing_player_uuid: directing_player_uuid,
-      playerPosMap:          playerPosMap,
       extConfig:             extConfig
     })
     register: (uuid) ->
-      {
+      reg = {
         at: (x,y) ->
-          if spritesByUuid[uuid]?
-            obj.renderer.moveSprite(spritesByUuid[uuid],[x,y])
+          if obj.renderer.isRenderingPlayer(uuid)
+            obj.renderer.moveSprite(uuid,[x,y])
           else
-            spritesByUuid[uuid] = obj.renderer.newWaitingDoom(x,y,uuid)
+            obj.renderer.newWaitingDoom(x,y,uuid)
+          reg
+        kill: () ->
+          obj.renderer.killSprite(uuid)
+          obj.renderer.markAsWaiting(uuid)
+
+          if uuid == directing_player_uuid
+            onDirectingPlayerDeath()
       }
   }
