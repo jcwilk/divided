@@ -4,7 +4,6 @@ window.divided.playerPool = (options) ->
     xPosToX,
     yPosToY,
     game,
-    souls,
     loadingText,
     directingPlayerUuid,
     extConfig,
@@ -16,7 +15,6 @@ window.divided.playerPool = (options) ->
       xPosToX:               xPosToX,
       yPosToY:               yPosToY,
       game:                  game,
-      souls:                 souls,
       loadingText:           loadingText,
       directingPlayerUuid: directingPlayerUuid,
       extConfig:             extConfig

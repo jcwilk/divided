@@ -2,6 +2,7 @@
 //= require move_matrix
 //= require selection_overlay
 //= require player_renderer
+//= require player_pool
 
 $(function() {
   var sliderContainer = {};
@@ -38,11 +39,9 @@ $(function() {
     return xToXPos(y+100);
   }
   var turnCount = 0;
-  var playerPosMap = {};
 
   var faye = new Faye.Client('/faye');
 
-  var souls;
   var isPointerDown = false;
   var isDead = false;
 
@@ -51,7 +50,6 @@ $(function() {
   var TILE_SIZE = 40;
 
   var selectionOverlay;
-  var playerRenderer;
 
   var resourceFromJSON = function(json) {
     var res = new Hyperagent.Resource();
@@ -99,8 +97,6 @@ $(function() {
       loadingText = game.add.text(game.world.centerX, game.world.centerY, "Waiting to join...", loadingTextStyle);
       loadingText.anchor.set(0.5);
 
-      souls = game.add.group();
-
       selectionOverlay = window.divided.selectionOverlay({
         xPosToX:   xPosToX,
         yPosToY:   yPosToY,
@@ -108,20 +104,36 @@ $(function() {
         game:      game
       });
 
-      playerRenderer = window.divided.playerRenderer({
-        xPosToX:               xPosToX,
-        yPosToY:               yPosToY,
-        game:                  game,
-        souls:                 souls,
-        loadingText:           loadingText,
-        directingPlayerUuid: player_uuid,
-        extConfig:             sliderContainer
+      playerPool = window.divided.playerPool({
+        xPosToX:                xPosToX,
+        yPosToY:                yPosToY,
+        game:                   game,
+        loadingText:            loadingText,
+        directingPlayerUuid:    player_uuid,
+        extConfig:              sliderContainer,
+        onDirectingPlayerDeath: function() {
+          isDead = true;
+          turnTween.stop();
+          background.alpha = 1;
+          game.input.onUp.add(function(p) {
+            location.reload();
+          },this);
+          game.stage.backgroundColor = '#FF0000';
+          game.add.tween(background).to({alpha: 0.0},100,Phaser.Easing.Circular.In,true)
+            .onComplete.add(function(){
+              game.add.tween(background).to({alpha: 1.0},200,Phaser.Easing.Circular.Out,true)
+                .onComplete.add(function(){
+                  game.stage.backgroundColor = '#880000';
+                  game.add.tween(background).to({alpha: 0.0},10000,Phaser.Easing.Circular.Out,true);
+                });
+            });
+        }
       });
 
       faye.subscribe('/room_events/waiting', function(payload) {
         var data = JSON.parse(payload);
         if (data.current_round == turnCount) {
-          playerRenderer.markAsWaiting(data.player_uuid);
+          playerPool.renderer.markAsWaiting(data.player_uuid);
         }
       });
 
@@ -140,7 +152,7 @@ $(function() {
           return (participant.props.uuid == player_uuid);
         })[0];
 
-        playerRenderer.markAllWaiting();
+        playerPool.renderer.markAllWaiting();
 
         var numOfPlayers = 0;
         for (k in data.players) {
@@ -151,23 +163,8 @@ $(function() {
         numOfPlayers-= data.killed.length;
 
         $.each(data.players, function(uuid,pos) {
-          playerPosMap[uuid] = pos;
-        });
-        console.log('new pos map - '+JSON.stringify(playerPosMap));
-
-        $.each(playerPosMap, function(uuid, soulData) {
-          var soul = souls.filter(function(s,i,group) {
-              return s.alive && s.uuid == uuid
-            }).first;
-          if(soul){
-            playerRenderer.moveSprite(uuid,soulData);
-          } else {
-            playerRenderer.newWaitingDoom(soulData[0],soulData[1],uuid);
-          }
-
-          if(numOfPlayers > 1 && data.players.hasOwnProperty(uuid)) {
-            playerRenderer.markAsChoosing(uuid);
-          }
+          playerPool.register(uuid).at(pos[0],pos[1])
+          playerPool.renderer.markAsChoosing(uuid);
         });
 
         if(hPlayer !== undefined) {
@@ -178,37 +175,13 @@ $(function() {
               throw new Error("Selection made after round ended!");
             }
           }).then(function(val) {
-            playerRenderer.displayAllChoosing();
+            playerPool.renderer.displayAllChoosing();
             return val;
           }).done();
         }
 
-        var killedSouls = souls.filter(function(s,i,group) {
-          return $.inArray(s.uuid,data.killed) > -1
-        }).list;
-        $.each(killedSouls, function(i,soul) {
-          soul.animations.stop();
-          playerRenderer.markAsWaiting(soul.uuid);
-          delete playerPosMap[soul.uuid];
-          soul.frame = 40;
-
-          if(soul.uuid === player_uuid) {
-            isDead = true;
-            turnTween.stop();
-            background.alpha = 1;
-            game.input.onUp.add(function(p) {
-              location.reload();
-            },this);
-            game.stage.backgroundColor = '#FF0000';
-            game.add.tween(background).to({alpha: 0.0},100,Phaser.Easing.Circular.In,true)
-              .onComplete.add(function(){
-                game.add.tween(background).to({alpha: 1.0},200,Phaser.Easing.Circular.Out,true)
-                  .onComplete.add(function(){
-                    game.stage.backgroundColor = '#880000';
-                    game.add.tween(background).to({alpha: 0.0},10000,Phaser.Easing.Circular.Out,true);
-                  });
-              });
-          }
+        $.each(data.killed, function(i,uuid) {
+          playerPool.register(uuid).kill();
         });
 
         if(!isDead) {

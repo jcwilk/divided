@@ -7,7 +7,6 @@ window.divided.playerRenderer = (options) ->
     xPosToX,
     yPosToY,
     game,
-    souls,
     loadingText,
     directingPlayerUuid,
     extConfig
@@ -27,7 +26,6 @@ window.divided.playerRenderer = (options) ->
       doom.animations.add('waiting',[4,4,4,4,4,4,3,5],2,true)
       doom.animations.play('waiting')
 
-      souls.add(doom)
       doom.currentPos = [xPos,yPos]
       doom.uuid = uuid
 
@@ -105,7 +103,8 @@ window.divided.playerRenderer = (options) ->
     isRenderingPlayer: (uuid) ->
       spritesByUuid[uuid]?
     killSprite: (uuid) ->
-      sprite = delete spritesByUuid[uuid]
+      sprite = spritesByUuid[uuid]
+      delete spritesByUuid[uuid]
       sprite.animations.stop()
       sprite.frame = 40
   }
