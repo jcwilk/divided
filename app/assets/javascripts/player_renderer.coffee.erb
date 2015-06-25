@@ -9,7 +9,7 @@ window.divided.playerRenderer = (options) ->
     game,
     souls,
     loadingText,
-    directing_player_uuid,
+    directingPlayerUuid,
     extConfig
   } = options
   
@@ -33,7 +33,7 @@ window.divided.playerRenderer = (options) ->
 
       spritesByUuid[uuid] = doom
 
-      if uuid == directing_player_uuid
+      if uuid == directingPlayerUuid
         doom.blip = game.add.sprite(14.5,-5,'player_blip',false)
         doom.blip.anchor.setTo(0.5)
         doom.addChild(doom.blip)
@@ -41,7 +41,7 @@ window.divided.playerRenderer = (options) ->
 
       return doom
     markAsChoosing: (uuid) ->
-      if uuid != directing_player_uuid
+      if uuid != directingPlayerUuid
         choosingUuids.push(uuid)
 
     markAsWaiting: (uuid) ->

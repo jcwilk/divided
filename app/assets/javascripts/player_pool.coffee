@@ -6,7 +6,7 @@ window.divided.playerPool = (options) ->
     game,
     souls,
     loadingText,
-    directing_player_uuid,
+    directingPlayerUuid,
     extConfig,
     onDirectingPlayerDeath
   } = options
@@ -18,7 +18,7 @@ window.divided.playerPool = (options) ->
       game:                  game,
       souls:                 souls,
       loadingText:           loadingText,
-      directing_player_uuid: directing_player_uuid,
+      directingPlayerUuid: directingPlayerUuid,
       extConfig:             extConfig
     })
     register: (uuid) ->
@@ -33,7 +33,7 @@ window.divided.playerPool = (options) ->
           obj.renderer.killSprite(uuid)
           obj.renderer.markAsWaiting(uuid)
 
-          if uuid == directing_player_uuid
+          if uuid == directingPlayerUuid
             onDirectingPlayerDeath()
       }
   }

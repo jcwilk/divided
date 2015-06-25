@@ -18,7 +18,7 @@ describe "Player Pool", () ->
       }
       souls: []
       loadingText: {}
-      directing_player_uuid: uuid
+      directingPlayerUuid: uuid
       onDirectingPlayerDeath: jasmine.createSpy('onDirectingPlayerDeath')
     }
     pp = window.divided.playerPool(options)
