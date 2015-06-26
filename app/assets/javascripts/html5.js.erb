@@ -154,14 +154,6 @@ $(function() {
 
         playerPool.renderer.markAllWaiting();
 
-        var numOfPlayers = 0;
-        for (k in data.players) {
-          if (data.players.hasOwnProperty(k)) {
-            numOfPlayers++;
-          }
-        }
-        numOfPlayers-= data.killed.length;
-
         $.each(data.players, function(uuid,pos) {
           playerPool.register(uuid).at(pos[0],pos[1])
           playerPool.renderer.markAsChoosing(uuid);
