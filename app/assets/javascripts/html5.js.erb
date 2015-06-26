@@ -133,7 +133,7 @@ $(function() {
       faye.subscribe('/room_events/waiting', function(payload) {
         var data = JSON.parse(payload);
         if (data.current_round == turnCount) {
-          playerPool.renderer.markAsWaiting(data.player_uuid);
+          playerPool.markAsWaiting(data.player_uuid);
         }
       });
 
@@ -152,11 +152,14 @@ $(function() {
           return (participant.props.uuid == player_uuid);
         })[0];
 
-        playerPool.renderer.markAllWaiting();
-
-        $.each(data.players, function(uuid,pos) {
-          playerPool.register(uuid).at(pos[0],pos[1])
-          playerPool.renderer.markAsChoosing(uuid);
+        playerPool.nextRound(function(r) {
+          $.each(data.players, function(uuid,pos) {
+            if($.inArray(uuid, data.killed) >= 0) {
+              r.register(uuid).at(pos[0],pos[1]).kill();
+            } else {
+              r.register(uuid).at(pos[0],pos[1]);
+            }
+          });
         });
 
         if(hPlayer !== undefined) {
@@ -167,14 +170,10 @@ $(function() {
               throw new Error("Selection made after round ended!");
             }
           }).then(function(val) {
-            playerPool.renderer.displayAllChoosing();
+            playerPool.displayAllChoosing();
             return val;
           }).done();
         }
-
-        $.each(data.killed, function(i,uuid) {
-          playerPool.register(uuid).kill();
-        });
 
         if(!isDead) {
           var doTween = function(){

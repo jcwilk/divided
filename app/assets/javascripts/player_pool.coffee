@@ -19,19 +19,31 @@ window.divided.playerPool = (options) ->
       directingPlayerUuid: directingPlayerUuid,
       extConfig:             extConfig
     })
-    register: (uuid) ->
-      reg = {
-        at: (x,y) ->
-          if obj.renderer.isRenderingPlayer(uuid)
-            obj.renderer.moveSprite(uuid,[x,y])
-          else
-            obj.renderer.newWaitingDoom(x,y,uuid)
-          reg
-        kill: () ->
-          obj.renderer.killSprite(uuid)
-          obj.renderer.markAsWaiting(uuid)
+    displayAllChoosing: () ->     obj.renderer.displayAllChoosing()
+    markAsWaiting:      (uuid) -> obj.renderer.markAsWaiting(uuid)
+    nextRound: (r) ->
+      ats = {}
+      kills = {}
 
-          if uuid == directingPlayerUuid
-            onDirectingPlayerDeath()
-      }
+      r(
+        register: (uuid) ->
+          at: (x,y) ->
+            ats[uuid] = () ->
+              if obj.renderer.isRenderingPlayer(uuid)
+                obj.renderer.moveSprite(uuid,[x,y])
+              else
+                obj.renderer.newWaitingDoom(x,y,uuid)
+            kill: () ->
+              kills[uuid] = () ->
+                obj.renderer.killSprite(uuid)
+                if uuid == directingPlayerUuid
+                  onDirectingPlayerDeath()
+      )
+      obj.renderer.markAllWaiting()
+
+      at() for uuid, at of ats
+      kill() for uuid, kill of kills
+
+      for uuid, at of ats
+        obj.renderer.markAsChoosing(uuid) if !kills[uuid]?
   }
