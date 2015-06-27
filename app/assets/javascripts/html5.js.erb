@@ -1,4 +1,4 @@
-//= require phaser-2.3.0.min
+//= require phaser-2.2.0.min
 //= require move_matrix
 //= require selection_overlay
 //= require player_renderer
@@ -77,7 +77,7 @@ $(function() {
     },
     preload: function() {
       //game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
-      game.input.onDown.add(function(){ game.scale.startFullScreen(false);},this);
+      //game.input.onDown.add(function(){ game.scale.startFullScreen(false);},this);
       loadingText = game.add.text(400, game.world.centerY, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
       <%= %w(starfield.jpg slate_flooring_40x40.png 2x2brown40x40.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
@@ -140,7 +140,6 @@ $(function() {
       });
 
       faye.subscribe('/room_events/advance', function(payload) {
-        console.log('advance! '+payload);
         var data = JSON.parse(payload);
         turnCount = data.current_round+1;
         var stillThisRound = function() {
@@ -192,7 +191,6 @@ $(function() {
       }).then(function(){
         //faye subscription to turn advancement is now active
         var room = resourceFromJSON(window._divided_room);
-        console.log(room.links['dv:join'].url());
         $.ajax({
           url: room.links['dv:join'].url(),
           headers: {

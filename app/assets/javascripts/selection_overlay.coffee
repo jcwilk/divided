@@ -82,12 +82,13 @@ selectionOverlay = (options) ->
     clearGlows: () ->
       obj.glows.callAllExists('fadeAndKill',true)
       obj.popups.destroy(true,true)
+      console.log(obj.glows.length)
+      console.log(obj.glows.countLiving())
     reset: () ->
       mm = window.divided.moveMatrix()
       obj.clearGlows()
       deferredSelection = null
     drawMatrixGlows: () ->
-      console.log(mm.all)
       if deferredSelection?
         deferredSelection.reject(new Error("No selection!"))
       currentDefer = Q.defer()
