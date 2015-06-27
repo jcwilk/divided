@@ -1,0 +1,113 @@
+FACE_WIDTH = 30
+FACE_HEIGHT = 32
+
+window.divided?= {}
+window.divided.playerRenderer = (options) ->
+  {
+    xPosToX,
+    yPosToY,
+    game,
+    loadingText,
+    directingPlayerUuid,
+    extConfig
+  } = options
+  
+  waitingMap = {}
+  choosingUuids = []
+  waitingIcons = game.add.group()
+  spritesByUuid = {}
+
+  obj = {
+    newWaitingDoom: (xPos,yPos,uuid) ->
+      doom = game.add.sprite(
+        xPosToX(xPos)-FACE_WIDTH/2, yPosToY(yPos)-FACE_HEIGHT/2, 'doomfaces'
+      )
+
+      doom.animations.add('waiting',[4,4,4,4,4,4,3,5],2,true)
+      doom.animations.play('waiting')
+
+      doom.currentPos = [xPos,yPos]
+      doom.uuid = uuid
+
+      spritesByUuid[uuid] = doom
+
+      if uuid == directingPlayerUuid
+        doom.blip = game.add.sprite(14.5,-5,'player_blip',false)
+        doom.blip.anchor.setTo(0.5)
+        doom.addChild(doom.blip)
+        loadingText.destroy()
+
+      return doom
+    markAsChoosing: (uuid) ->
+      if uuid != directingPlayerUuid
+        choosingUuids.push(uuid)
+
+    markAsWaiting: (uuid) ->
+      img = waitingMap[uuid]
+      if !img
+        return
+      game.add.tween(img)
+        .to({y: img.y-20, alpha: 0},200,Phaser.Easing.Default,true)
+        .onComplete.add(() ->
+          img.kill()
+        )
+      delete waitingMap[uuid]
+
+    markAllWaiting: () ->
+      $.each(waitingMap, (uuid,_) ->
+        obj.markAsWaiting(uuid)
+      )
+      waitingMap = {}
+      choosingUuids = []
+
+    displayAllChoosing: () ->
+      $.each($.unique(choosingUuids), (i, uuid) ->
+        sprite = spritesByUuid[uuid]
+        if !sprite || waitingMap[uuid]
+          return
+
+        pos = sprite.currentPos
+
+        icon = waitingIcons.getFirstDead()
+        x = xPosToX(pos[0])-20
+        y = yPosToY(pos[1])-20
+
+        if icon
+          icon.reset(x,y)
+          icon.alpha = 1
+        else
+          icon = waitingIcons.create(x,y,'hourglass')
+
+        game.add.tween(icon).to({y: y-10},500,Phaser.Easing.Default,true,0,Number.MAX_VALUE,true)
+        waitingMap[uuid] = icon
+      )
+    moveSprite: (uuid,nPos) ->
+      sprite = spritesByUuid[uuid]
+      cPos = sprite.currentPos
+      if nPos[0] < cPos[0]
+        sprite.animations.stop()
+        sprite.animations.frame = 6
+      else if nPos[0] > cPos[0]
+        sprite.animations.stop()
+        sprite.animations.frame = 7
+      else
+        sprite.animations.play('waiting')
+
+      cPos[0] = nPos[0]
+      cPos[1] = nPos[1]
+
+      game.add.tween(sprite).to({
+        x: xPosToX(cPos[0])-sprite.width/2,
+        y: yPosToY(cPos[1])-sprite.height/2
+      }, extConfig.animationDuration, Phaser.Easing.Cubic.InOut, true)
+    isRenderingPlayer: (uuid) ->
+      spritesByUuid[uuid]?
+    killSprite: (uuid) ->
+      sprite = spritesByUuid[uuid]
+      delete spritesByUuid[uuid]
+      sprite.animations.stop()
+      sprite.frame = 40
+  }
+
+window.divided.playerRenderer.preload = (game) ->
+  game.load.spritesheet('doomfaces', <%= asset_path('doomfaces.png').inspect %>, FACE_WIDTH, FACE_HEIGHT, 42)

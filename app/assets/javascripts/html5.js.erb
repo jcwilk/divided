@@ -1,6 +1,8 @@
 //= require phaser.min
 //= require move_matrix
 //= require selection_overlay
+//= require player_renderer
+//= require player_pool
 
 $(function() {
   var sliderContainer = {};
@@ -37,43 +39,17 @@ $(function() {
     return xToXPos(y+100);
   }
   var turnCount = 0;
-  var playerPosMap = {};
 
   var faye = new Faye.Client('/faye');
 
-  var souls, waitingIcons;
   var isPointerDown = false;
   var isDead = false;
 
   var turnTween;
 
-  var FACE_WIDTH = 30;
-  var FACE_HEIGHT = 32;
   var TILE_SIZE = 40;
 
   var selectionOverlay;
-
-  var newWaitingDoom = function(xPos,yPos,uuid){
-    var doom = game.add.sprite(
-      xPosToX(xPos)-FACE_WIDTH/2, yPosToY(yPos)-FACE_HEIGHT/2, 'doomfaces'
-    );
-
-    doom.animations.add('waiting',[4,4,4,4,4,4,3,5],2,true);
-    doom.animations.play('waiting');
-
-    souls.add(doom);
-    doom.currentPos = [xPos,yPos];
-    doom.uuid = uuid;
-
-    if(uuid === player_uuid) {
-      doom.blip = game.add.sprite(14.5,-5,'player_blip',false);
-      doom.blip.anchor.setTo(0.5);
-      doom.addChild(doom.blip);
-      loadingText.destroy();
-    }
-
-    return doom;
-  }
 
   var resourceFromJSON = function(json) {
     var res = new Hyperagent.Resource();
@@ -103,8 +79,7 @@ $(function() {
       loadingText = game.add.text(game.world.centerX, game.world.centerY, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
       <%= %w(starfield.jpg slate_flooring_40x40.png 2x2brown40x40.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
-      game.load.spritesheet('doomfaces', <%= asset_path('doomfaces.png').inspect %>, FACE_WIDTH, FACE_HEIGHT, 42);
-      game.load.spritesheet('lost_soul_basic', <%= asset_path('lost_soul_basic.png').inspect %>, 104, 90, 8);
+      window.divided.playerRenderer.preload(game);
       game.load.spritesheet('rgb_glow', <%= asset_path('rgb_120.png').inspect %>, 40, 40, 3);
       game.load.image('hourglass', <%= asset_path('hourglass_small.png').inspect %>);
       game.load.image('player_blip', <%= asset_path('green_blip_19.png').inspect %>);
@@ -122,91 +97,45 @@ $(function() {
       loadingText = game.add.text(game.world.centerX, game.world.centerY, "Waiting to join...", loadingTextStyle);
       loadingText.anchor.set(0.5);
 
-      souls = game.add.group();
-      waitingIcons = game.add.group();
-
       selectionOverlay = window.divided.selectionOverlay({
         xPosToX:   xPosToX,
         yPosToY:   yPosToY,
         extConfig: sliderContainer,
-        game: game
+        game:      game
       });
 
-      var waitingMap = {};
-      var choosingUuids = [];
-      var markAsChoosing = function(uuid) {
-        if(uuid != player_uuid) choosingUuids.push(uuid);
-      }
-
-      var displayAllChoosing = function() {
-        $.each($.unique(choosingUuids), function(i, uuid) {
-          var pos = playerPosMap[uuid];
-          if(!pos || waitingMap[uuid]) return;
-
-          var icon = waitingIcons.getFirstDead();
-          var x = xPosToX(pos[0])-20;
-          var y = yPosToY(pos[1])-20;
-
-          if (icon) {
-            icon.reset(x,y);
-            icon.alpha = 1;
-          } else {
-            icon = waitingIcons.create(x,y,'hourglass');
-          }
-
-          game.add.tween(icon).to({y: y-10},500,Phaser.Easing.Default,true,0,Number.MAX_VALUE,true);
-          waitingMap[uuid] = icon;
-        });
-      }
-
-      var markAsWaiting = function(uuid) {
-        var img = waitingMap[uuid];
-        if(!img) return;
-        game.add.tween(img)
-          .to({y: img.y-20, alpha: 0},200,Phaser.Easing.Default,true)
-          .onComplete.add(function(){
-            img.kill();
-          });
-        delete waitingMap[uuid];
-      }
-
-      var markAllWaiting = function() {
-        $.each(waitingMap, function(uuid,_) {
-          markAsWaiting(uuid);
-        });
-        waitingMap = {};
-        choosingUuids = [];
-      }
+      playerPool = window.divided.playerPool({
+        xPosToX:                xPosToX,
+        yPosToY:                yPosToY,
+        game:                   game,
+        loadingText:            loadingText,
+        directingPlayerUuid:    player_uuid,
+        extConfig:              sliderContainer,
+        onDirectingPlayerDeath: function() {
+          isDead = true;
+          turnTween.stop();
+          background.alpha = 1;
+          game.input.onUp.add(function(p) {
+            location.reload();
+          },this);
+          game.stage.backgroundColor = '#FF0000';
+          game.add.tween(background).to({alpha: 0.0},100,Phaser.Easing.Circular.In,true)
+            .onComplete.add(function(){
+              game.add.tween(background).to({alpha: 1.0},200,Phaser.Easing.Circular.Out,true)
+                .onComplete.add(function(){
+                  game.stage.backgroundColor = '#880000';
+                  game.add.tween(background).to({alpha: 0.0},10000,Phaser.Easing.Circular.Out,true);
+                });
+            });
+        }
+      });
 
       faye.subscribe('/room_events/waiting', function(payload) {
         var data = JSON.parse(payload);
         if (data.current_round == turnCount) {
-          markAsWaiting(data.player_uuid);
+          playerPool.markAsWaiting(data.player_uuid);
         }
       });
-
-      var moveSprite = function(sprite,nPos) {
-        var cPos = sprite.currentPos;
-        if (nPos[0] < cPos[0]) {
-          sprite.animations.stop();
-          sprite.animations.frame = 6;
-        }
-        else if (nPos[0] > cPos[0]) {
-          sprite.animations.stop();
-          sprite.animations.frame = 7;
-        }
-        else {
-          sprite.animations.play('waiting');
-        }
-
-        cPos[0] = nPos[0];
-        cPos[1] = nPos[1];
-
-        game.add.tween(sprite).to({
-          x: xPosToX(cPos[0])-sprite.width/2,
-          y: yPosToY(cPos[1])-sprite.height/2
-        }, sliderContainer.animationDuration, Phaser.Easing.Cubic.InOut, true);
-      }
 
       faye.subscribe('/room_events/advance', function(payload) {
         console.log('advance! '+payload);
@@ -223,34 +152,14 @@ $(function() {
           return (participant.props.uuid == player_uuid);
         })[0];
 
-        markAllWaiting();
-
-        var numOfPlayers = 0;
-        for (k in data.players) {
-          if (data.players.hasOwnProperty(k)) {
-            numOfPlayers++;
-          }
-        }
-        numOfPlayers-= data.killed.length;
-
-        $.each(data.players, function(uuid,pos) {
-          playerPosMap[uuid] = pos;
-        });
-        console.log('new pos map - '+JSON.stringify(playerPosMap));
-
-        $.each(playerPosMap, function(uuid, soulData) {
-          var soul = souls.filter(function(s,i,group) {
-              return s.alive && s.uuid == uuid
-            }).first;
-          if(soul){
-            moveSprite(soul,soulData);
-          } else {
-            newWaitingDoom(soulData[0],soulData[1],uuid);
-          }
-
-          if(numOfPlayers > 1 && data.players.hasOwnProperty(uuid)) {
-            markAsChoosing(uuid);
-          }
+        playerPool.nextRound(function(r) {
+          $.each(data.players, function(uuid,pos) {
+            if($.inArray(uuid, data.killed) >= 0) {
+              r.register(uuid).at(pos[0],pos[1]).kill();
+            } else {
+              r.register(uuid).at(pos[0],pos[1]);
+            }
+          });
         });
 
         if(hPlayer !== undefined) {
@@ -261,40 +170,10 @@ $(function() {
               throw new Error("Selection made after round ended!");
             }
           }).then(function(val) {
-            displayAllChoosing();
+            playerPool.displayAllChoosing();
             return val;
           }).done();
         }
-
-        var killedSouls = souls.filter(function(s,i,group) {
-          return $.inArray(s.uuid,data.killed) > -1
-        }).list;
-        $.each(killedSouls, function(i,soul) {
-          soul.animations.stop();
-          markAsWaiting(soul.uuid);
-          delete playerPosMap[soul.uuid];
-
-          if(soul.uuid === player_uuid) {
-            isDead = true;
-            turnTween.stop();
-            background.alpha = 1;
-            game.input.onUp.add(function(p) {
-              location.reload();
-            },this);
-            game.stage.backgroundColor = '#FF0000';
-            game.add.tween(background).to({alpha: 0.0},100,Phaser.Easing.Circular.In,true)
-              .onComplete.add(function(){
-                soul.frame = 40;
-                game.add.tween(background).to({alpha: 1.0},200,Phaser.Easing.Circular.Out,true)
-                  .onComplete.add(function(){
-                    game.stage.backgroundColor = '#880000';
-                    game.add.tween(background).to({alpha: 0.0},10000,Phaser.Easing.Circular.Out,true);
-                  });
-              });
-          } else {
-            soul.frame = 40;
-          }
-        });
 
         if(!isDead) {
           var doTween = function(){
@@ -311,6 +190,7 @@ $(function() {
       }).then(function(){
         //faye subscription to turn advancement is now active
         var room = resourceFromJSON(window._divided_room);
+        console.log(room.links['dv:join'].url());
         $.ajax({
           url: room.links['dv:join'].url(),
           headers: {
