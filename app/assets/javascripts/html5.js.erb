@@ -76,8 +76,8 @@ $(function() {
       game.camera.y = 0-(y-600)/2;
     },
     preload: function() {
-      //game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
-      //game.input.onDown.add(function(){ game.scale.startFullScreen(false);},this);
+      game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
+      game.input.onDown.add(function(){ game.scale.startFullScreen(false);},this);
       loadingText = game.add.text(400, game.world.centerY, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
       <%= %w(starfield.jpg slate_flooring_40x40.png 2x2brown40x40.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
