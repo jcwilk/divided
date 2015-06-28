@@ -12,7 +12,7 @@ class Participant < Hashie::Dash
 
   def choose_move(id)
     move_by_id(id).tap do |move|
-      round.add_move(player: player, move: move)
+      round.add_move(player: player, move: move) if move
     end
   end
 

@@ -2,7 +2,7 @@ class ClientController < ApplicationController
   def new
     @slider_vars = {
       animationDuration: 650,
-      blinkDelay: 500
+      blinkDelay: 300
     }
     player = Player.new_active
     @player_uuid = player.uuid #SecureRandom.urlsafe_base64(8)

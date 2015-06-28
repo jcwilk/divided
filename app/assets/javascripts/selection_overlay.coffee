@@ -2,31 +2,49 @@ window.divided?= {}
 selectionOverlay = (options) ->
   {xPosToX,yPosToY,extConfig,game} = options
 
+  activeGlows = game.add.group()
+  activeGlows.alpha = 0
+  blink = null
+  texts = game.add.group()
+  glows = []
+
+  debug = () ->
+    console.log("activeGlows: "+activeGlows.length+" living: "+activeGlows.countLiving())
+    console.log("texts: "+texts.length+" living: "+texts.countLiving())
+    console.log("glows: "+glows.length+" living: "+$.grep(glows,((gl) -> gl.alive)).length)
+
   getText = (content,xPos,yPos) ->
     x = xPosToX(xPos)
     y = yPosToY(yPos)
-    t = obj.game.add.text(x,y,content, {
-      fill:            "#ffffff"
-      align:           "center"
-      stroke:          '#000000'
-      strokeThickness: 2
-    })
-    t.font = 'Arial'
-    t.fontWeight = 'bold'
-    t.fontSize = 15
-    t.anchor.set(0.5)
-    t.angle = 25
-    #text.alpha = 0.5;
-    obj.popups.add(t)
+    if t = texts.getFirstDead()
+      t.reset(x,y)
+      t.setText(content)
+    else
+      t = game.add.text(x,y,content, {
+        fill:            "#ffffff"
+        align:           "center"
+        stroke:          '#000000'
+        strokeThickness: 2
+      })
+      t.font = 'Arial'
+      t.fontWeight = 'bold'
+      t.fontSize = 15
+      t.anchor.set(0.5)
+      t.angle = 25
+      texts.add(t)
     t
 
   glowForActionsAtPos = (rotation,xPos,yPos) ->
     x = xPosToX(xPos)
     y = yPosToY(yPos)
     glow = obj.getGlow(x,y)
-    blink = null
+    text = null
+    looping = true
 
     tweenForIndex = (rotationIndex) ->
+      if !looping
+        return
+
       action = rotation[rotationIndex % rotation.length]
 
       if action == 'attack'
@@ -34,27 +52,21 @@ selectionOverlay = (options) ->
       else
         glow.frame = 1
 
-      text = getText(action.toUpperCase(), xPos, yPos)
-
-      blink = obj.game.add.tween(glow).to({alpha: 0.4},extConfig.blinkDelay/rotation.length,Phaser.Easing.Circular.Out,true)
-      blink.onComplete.add () ->
-        blink = obj.game.add.tween(glow).to({alpha: 0.0},extConfig.blinkDelay/rotation.length,Phaser.Easing.Circular.In,true)
-        blink.onComplete.add () ->
-          text.destroy()
-          tweenForIndex(rotationIndex+1)
+      if !text?
+        text = getText(action.toUpperCase(), xPos, yPos)
+      else if text.text != action.toUpperCase()
+        text.setText(action.toUpperCase())
+      
+      window.setTimeout((() -> tweenForIndex(rotationIndex+1)), extConfig.blinkDelay*2)
     tweenForIndex(0)
 
-    isDying = false
     glow.fadeAndKill = () ->
-      if isDying
+      if !looping
         return
-      isDying = true
-
-      blink.stop()
+      looping = false
       glow.events.onInputUp.removeAll()
-      obj.game.add.tween(glow).to({alpha: 0.0},extConfig.blinkDelay*(glow.alpha/0.4),Phaser.Easing.Quadratic.InOut,true,0)
-      .onComplete.add () ->
-        glow.kill()
+      glow.kill()
+      text.kill()
     return glow
 
   mm = window.divided.moveMatrix()
@@ -62,28 +74,24 @@ selectionOverlay = (options) ->
   deferredSelection = null
 
   obj = {
-    game: game
-    glows: game.add.group()
-    popups: game.add.group()
     at: (x,y) ->
       mm.at(x,y)
-    setGame: (game) ->
-      obj.game = game
-      obj
     getGlow: (x,y) ->
-      g = obj.glows.getFirstDead()
+      g = $.grep(glows,((gl) -> !gl.alive))[0]
       if g
         g.reset(x,y)
+        g.alpha = 1
       else
-        g = obj.glows.create(x,y,'rgb_glow')
-      g.anchor.set(0.5)
-      g.alpha = 0
+        g = game.add.sprite(x,y,'rgb_glow')
+        glows.push(g)
+        g.anchor.set(0.5)
+      activeGlows.add(g)
       g
     clearGlows: () ->
-      obj.glows.callAllExists('fadeAndKill',true)
-      obj.popups.destroy(true,true)
-      console.log(obj.glows.length)
-      console.log(obj.glows.countLiving())
+      activeGlows.callAllExists('fadeAndKill',true)
+      activeGlows.removeAll()
+      if blink?
+        blink.stop()
     reset: () ->
       mm = window.divided.moveMatrix()
       obj.clearGlows()
@@ -93,6 +101,13 @@ selectionOverlay = (options) ->
         deferredSelection.reject(new Error("No selection!"))
       currentDefer = Q.defer()
       deferredSelection = currentDefer
+      tweenLoop = () ->
+        blink = game.add.tween(activeGlows).to({alpha: 0.4},extConfig.blinkDelay,Phaser.Easing.Circular.Out,true)
+        blink.onComplete.add () ->
+          blink = game.add.tween(activeGlows).to({alpha: 0.0},extConfig.blinkDelay,Phaser.Easing.Circular.In,true)
+          blink.onComplete.add () ->
+            tweenLoop()
+      tweenLoop()
       $.each mm.all, (i,at) ->
         glow = glowForActionsAtPos(Object.keys(at.moves),at.x,at.y)
         glow.inputEnabled = true
@@ -133,6 +148,7 @@ selectionOverlay = (options) ->
                 obj.clearGlows()
                 postToUrl(url)
               this)
+      #debug()
       return currentDefer
     selectionForParticipant: (participant) ->
       obj.reset()
