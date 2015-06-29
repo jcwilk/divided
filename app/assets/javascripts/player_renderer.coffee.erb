@@ -1,6 +1,3 @@
-FACE_WIDTH = 30
-FACE_HEIGHT = 32
-
 window.divided?= {}
 window.divided.playerRenderer = (options) ->
   {
@@ -21,21 +18,21 @@ window.divided.playerRenderer = (options) ->
 
   obj = {
     newWaitingDoom: (xPos,yPos,uuid) ->
-      doom = game.add.sprite(
-        xPosToX(xPos)-FACE_WIDTH/2, yPosToY(yPos)-FACE_HEIGHT/2, 'doomfaces'
-      )
-
-      doom.animations.add('waiting',[4,4,4,4,4,4,3,5],2,true)
-      doom.animations.play('waiting')
-
+      doom = game.add.sprite(xPosToX(xPos), yPosToY(yPos), 'ninja')
+      doom.anchor.x = 0.5
+      doom.anchor.y = 2/3
       doom.currentPos = [xPos,yPos]
       doom.uuid = uuid
+      doom.smoothed = false
+      doom.scale.set(scaler.scale)
 
       spritesByUuid[uuid] = doom
 
       if uuid == directingPlayerUuid
-        doom.blip = game.add.sprite(14.5,-5,'player_blip',false)
+        doom.blip = game.add.sprite(0,-12,'player_blip',false)
         doom.blip.anchor.setTo(0.5)
+        doom.blip.scale.set(0.25)
+        doom.blip.smoothed = false
         doom.addChild(doom.blip)
         loadingText.destroy()
 
@@ -71,14 +68,16 @@ window.divided.playerRenderer = (options) ->
         pos = sprite.currentPos
 
         icon = waitingIcons.getFirstDead()
-        x = xPosToX(pos[0])-20
-        y = yPosToY(pos[1])-20
+        x = xPosToX(pos[0])-5*scaler.scale
+        y = yPosToY(pos[1])-14*scaler.scale
 
         if icon
           icon.reset(x,y)
           icon.alpha = 1
         else
           icon = waitingIcons.create(x,y,'hourglass')
+          icon.smoothed = false
+          icon.scale.set(scaler.scale/4)
 
         game.add.tween(icon).to({y: y-10},500,Phaser.Easing.Default,true,0,Number.MAX_VALUE,true)
         waitingMap[uuid] = icon
@@ -86,33 +85,26 @@ window.divided.playerRenderer = (options) ->
     moveSprite: (uuid,nPos) ->
       sprite = spritesByUuid[uuid]
       cPos = sprite.currentPos
-      if nPos[0] < cPos[0]
-        sprite.animations.stop()
-        sprite.animations.frame = 6
-      else if nPos[0] > cPos[0]
-        sprite.animations.stop()
-        sprite.animations.frame = 7
-      else
-        sprite.animations.play('waiting')
 
       cPos[0] = nPos[0]
       cPos[1] = nPos[1]
 
       game.add.tween(sprite).to({
-        x: xPosToX(cPos[0])-sprite.width/2,
-        y: yPosToY(cPos[1])-sprite.height/2
+        x: xPosToX(cPos[0]),
+        y: yPosToY(cPos[1])
       }, extConfig.animationDuration, Phaser.Easing.Cubic.InOut, true)
     isRenderingPlayer: (uuid) ->
       spritesByUuid[uuid]?
     killSprite: (uuid) ->
       sprite = spritesByUuid[uuid]
       delete spritesByUuid[uuid]
-      sprite.animations.stop()
-      sprite.frame = 40
+      sprite.angle = 180
       bodies.add(sprite)
-    clearBodies: () ->
-      bodies.destroy(true,true)
+    destroy: () ->
+      bodies.destroy()
+      waitingIcons.destroy()
+      $.each(spritesByUuid, ((k,v) -> v.destroy()))
   }
 
 window.divided.playerRenderer.preload = (game) ->
-  game.load.spritesheet('doomfaces', <%= asset_path('doomfaces.png').inspect %>, FACE_WIDTH, FACE_HEIGHT, 42)
+  game.load.image('ninja', <%= asset_path('ninja.png').inspect %>)

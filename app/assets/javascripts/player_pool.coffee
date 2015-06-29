@@ -11,19 +11,23 @@ window.divided.playerPool = (options) ->
 
   lastRender = null
 
-  obj = {
-    renderer: window.divided.playerRenderer({
+  buildRenderer = () ->
+    window.divided.playerRenderer({
       scaler:                scaler,
       game:                  game,
       loadingText:           loadingText,
-      directingPlayerUuid: directingPlayerUuid,
+      directingPlayerUuid:   directingPlayerUuid,
       extConfig:             extConfig
     })
+
+  obj = {
+    renderer: buildRenderer()
     displayAllChoosing: () ->     obj.renderer.displayAllChoosing()
     markAsWaiting:      (uuid) -> obj.renderer.markAsWaiting(uuid)
     redraw: () ->
+      obj.renderer.destroy()
+      obj.renderer = buildRenderer()
       if lastRender?
-        obj.renderer.clearBodies()
         lastRender()
     nextRound: (r) ->
       ats = {}
