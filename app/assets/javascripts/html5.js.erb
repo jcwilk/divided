@@ -26,19 +26,22 @@ $(function() {
   });
 
   var background, walls, floor, cursors;
-  var scale = 4;
-  var xPosToX = function(xPos) {
-    return (xPos*10+5-50)*scale;
+  var scaler = {
+    xPosToX: function(xPos) {
+      return (xPos*10+5-50)*scaler.scale;
+    },
+    yPosToY: function(yPos) {
+      return scaler.xPosToX(yPos);
+    },
+    xToXPos: function(x) {
+      return Math.round((x-5+50)/10/scaler.scale);
+    },
+    yToYPos: function(y) {
+      return scaler.xToXPos(y);
+    },
+    scale: 4
   }
-  var yPosToY = function(yPos) {
-    return xPosToX(yPos);
-  }
-  var xToXPos = function(x) {
-    return Math.round((x-5+50)/10/scale);
-  }
-  var yToYPos = function(y) {
-    return xToXPos(y);
-  }
+  
   var turnCount = 0;
 
   var faye = new Faye.Client('/faye');
@@ -79,6 +82,7 @@ $(function() {
         floor.scale.x = scale;
         floor.scale.y = scale;  
       }
+      scaler.scale = scale;
 
       if(selectionOverlay !== undefined) selectionOverlay.redraw()
       if(playerPool !== undefined) playerPool.redraw()
@@ -109,23 +113,21 @@ $(function() {
       floor = game.add.sprite(0,0,'100x100_pathway_dirt');
       floor.anchor.set(0.5);
       floor.smoothed = false
-      floor.scale.x = scale;
-      floor.scale.y = scale;
+      floor.scale.x = scaler.scale;
+      floor.scale.y = scaler.scale;
 
       loadingText.destroy();
       loadingText = game.add.text(400, game.world.centerY, "Waiting to join...", loadingTextStyle);
       loadingText.anchor.set(0.5);
 
       selectionOverlay = window.divided.selectionOverlay({
-        xPosToX:   xPosToX,
-        yPosToY:   yPosToY,
+        scaler:    scaler,
         extConfig: sliderContainer,
         game:      game
       });
 
       playerPool = window.divided.playerPool({
-        xPosToX:                xPosToX,
-        yPosToY:                yPosToY,
+        scaler:                 scaler, 
         game:                   game,
         loadingText:            loadingText,
         directingPlayerUuid:    player_uuid,

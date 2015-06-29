@@ -4,13 +4,14 @@ FACE_HEIGHT = 32
 window.divided?= {}
 window.divided.playerRenderer = (options) ->
   {
-    xPosToX,
-    yPosToY,
+    scaler,
     game,
     loadingText,
     directingPlayerUuid,
     extConfig
   } = options
+
+  {xPosToX,yPosToY} = scaler
   
   waitingMap = {}
   choosingUuids = []

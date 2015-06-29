@@ -1,6 +1,8 @@
 window.divided?= {}
 selectionOverlay = (options) ->
-  {xPosToX,yPosToY,extConfig,game} = options
+  {scaler,extConfig,game} = options
+
+  {xPosToX,yPosToY} = scaler
 
   activeGlows = game.add.group()
   activeGlows.alpha = 0

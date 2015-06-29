@@ -1,8 +1,7 @@
 window.divided?= {}
 window.divided.playerPool = (options) ->
   {
-    xPosToX,
-    yPosToY,
+    scaler,
     game,
     loadingText,
     directingPlayerUuid,
@@ -14,8 +13,7 @@ window.divided.playerPool = (options) ->
 
   obj = {
     renderer: window.divided.playerRenderer({
-      xPosToX:               xPosToX,
-      yPosToY:               yPosToY,
+      scaler:                scaler,
       game:                  game,
       loadingText:           loadingText,
       directingPlayerUuid: directingPlayerUuid,
