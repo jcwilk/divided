@@ -30,7 +30,7 @@ selectionOverlay = (options) ->
       })
       t.font = 'Arial'
       t.fontWeight = 'bold'
-      t.fontSize = 15
+      t.fontSize = 4*scaler.scale
       t.anchor.set(0.5)
       t.angle = 25
       texts.add(t)
@@ -56,8 +56,12 @@ selectionOverlay = (options) ->
 
       if !text?
         text = getText(action.toUpperCase(), xPos, yPos)
-      else if text.text != action.toUpperCase()
-        text.setText(action.toUpperCase())
+      else
+        if text.text != action.toUpperCase()
+          text.setText(action.toUpperCase())
+
+      if text.fontSize != 4*scaler.scale
+          text.fontSize = 4*scaler.scale
       
       window.setTimeout((() -> tweenForIndex(rotationIndex+1)), extConfig.blinkDelay*2)
     tweenForIndex(0)
@@ -88,6 +92,7 @@ selectionOverlay = (options) ->
         g = game.add.sprite(x,y,'rgb_glow')
         glows.push(g)
         g.anchor.set(0.5)
+      g.scale.set(scaler.scale)
       activeGlows.add(g)
       g
     clearGlows: () ->
@@ -111,7 +116,7 @@ selectionOverlay = (options) ->
       currentDefer = Q.defer()
       deferredSelection = currentDefer
       tweenLoop = () ->
-        blink = game.add.tween(activeGlows).to({alpha: 0.4},extConfig.blinkDelay,Phaser.Easing.Circular.Out,true)
+        blink = game.add.tween(activeGlows).to({alpha: 0.6},extConfig.blinkDelay,Phaser.Easing.Circular.Out,true)
         blink.onComplete.add () ->
           blink = game.add.tween(activeGlows).to({alpha: 0.0},extConfig.blinkDelay,Phaser.Easing.Circular.In,true)
           blink.onComplete.add () ->

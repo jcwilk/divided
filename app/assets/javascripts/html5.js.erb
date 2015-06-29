@@ -75,7 +75,7 @@ $(function() {
       game.camera.y = -300;
     },
     resize: function(x,y) {
-      min = x > y ? y : x;
+      min = x > y*0.95 ? y*0.95 : x;
       scale = Math.floor(min/100);
       if(scale < 1) scale = 1;
       if(floor !== undefined) {
@@ -94,30 +94,23 @@ $(function() {
     preload: function() {
       game.scale.fullScreenScaleMode = Phaser.ScaleManager.RESIZE;
       game.input.onDown.add(function(){ game.scale.startFullScreen(false);},this);
-      loadingText = game.add.text(400, game.world.centerY, "Loading assets...", loadingTextStyle);
+      loadingText = game.add.text(0, 0, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
       <%= %w(starfield.jpg 100x100_pathway_dirt.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       window.divided.playerRenderer.preload(game);
-      game.load.spritesheet('rgb_glow', <%= asset_path('rgb_120.png').inspect %>, 40, 40, 3);
+      game.load.spritesheet('rgb_glow', <%= asset_path('rgb_30.png').inspect %>, 10, 10, 3);
       game.load.image('hourglass', <%= asset_path('hourglass_small.png').inspect %>);
       game.load.image('player_blip', <%= asset_path('green_blip_19.png').inspect %>);
     },
     create: function(){
       background = game.add.tileSprite(-1500, -1500, 3000, 3000, 'starfield');
-      // walls = game.add.group();
-      // walls.add(game.add.tileSprite(160,60,480,40,'slate_flooring_40x40'));
-      // walls.add(game.add.tileSprite(160,500,480,40,'slate_flooring_40x40'));
-      // walls.add(game.add.tileSprite(160,100,40,400,'slate_flooring_40x40'));
-      // walls.add(game.add.tileSprite(600,100,40,400,'slate_flooring_40x40'));
-      // floor = game.add.tileSprite(200,100,400,400,'2x2brown40x40');
       floor = game.add.sprite(0,0,'100x100_pathway_dirt');
       floor.anchor.set(0.5);
-      floor.smoothed = false
-      floor.scale.x = scaler.scale;
-      floor.scale.y = scaler.scale;
+      floor.smoothed = false;
+      floor.scale.set(scaler.scale);
 
       loadingText.destroy();
-      loadingText = game.add.text(400, game.world.centerY, "Waiting to join...", loadingTextStyle);
+      loadingText = game.add.text(0, 0, "Waiting to join...", loadingTextStyle);
       loadingText.anchor.set(0.5);
 
       selectionOverlay = window.divided.selectionOverlay({
