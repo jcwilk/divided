@@ -10,6 +10,8 @@ window.divided.playerPool = (options) ->
     onDirectingPlayerDeath
   } = options
 
+  lastRender = null
+
   obj = {
     renderer: window.divided.playerRenderer({
       xPosToX:               xPosToX,
@@ -21,6 +23,10 @@ window.divided.playerPool = (options) ->
     })
     displayAllChoosing: () ->     obj.renderer.displayAllChoosing()
     markAsWaiting:      (uuid) -> obj.renderer.markAsWaiting(uuid)
+    redraw: () ->
+      if lastRender?
+        obj.renderer.clearBodies()
+        lastRender()
     nextRound: (r) ->
       ats = {}
       kills = {}
@@ -41,9 +47,11 @@ window.divided.playerPool = (options) ->
       )
       obj.renderer.markAllWaiting()
 
-      at() for uuid, at of ats
-      kill() for uuid, kill of kills
+      lastRender = () ->
+        at() for uuid, at of ats
+        kill() for uuid, kill of kills
 
-      for uuid, at of ats
-        obj.renderer.markAsChoosing(uuid) if !kills[uuid]?
+        for uuid, at of ats
+          obj.renderer.markAsChoosing(uuid) if !kills[uuid]?
+      lastRender()
   }

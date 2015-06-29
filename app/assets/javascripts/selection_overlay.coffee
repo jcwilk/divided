@@ -72,6 +72,7 @@ selectionOverlay = (options) ->
   mm = window.divided.moveMatrix()
 
   deferredSelection = null
+  lastParticipant = null
 
   obj = {
     at: (x,y) ->
@@ -96,6 +97,12 @@ selectionOverlay = (options) ->
       mm = window.divided.moveMatrix()
       obj.clearGlows()
       deferredSelection = null
+      lastParticipant = null
+    redraw: () ->
+      if lastParticipant?
+        p = lastParticipant
+        obj.reset()
+        obj.selectionForParticipant(p)
     drawMatrixGlows: () ->
       if deferredSelection?
         deferredSelection.reject(new Error("No selection!"))
@@ -152,6 +159,8 @@ selectionOverlay = (options) ->
       return currentDefer
     selectionForParticipant: (participant) ->
       obj.reset()
+      lastParticipant = participant
+      
       promise = participant.links['dv:moves'].fetch().then((moves) ->
         $.each moves.embedded.moves, (i,move) ->
           newMoves = {}

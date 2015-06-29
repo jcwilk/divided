@@ -16,6 +16,7 @@ window.divided.playerRenderer = (options) ->
   choosingUuids = []
   waitingIcons = game.add.group()
   spritesByUuid = {}
+  bodies = game.add.group()
 
   obj = {
     newWaitingDoom: (xPos,yPos,uuid) ->
@@ -107,6 +108,9 @@ window.divided.playerRenderer = (options) ->
       delete spritesByUuid[uuid]
       sprite.animations.stop()
       sprite.frame = 40
+      bodies.add(sprite)
+    clearBodies: () ->
+      bodies.destroy(true,true)
   }
 
 window.divided.playerRenderer.preload = (game) ->
