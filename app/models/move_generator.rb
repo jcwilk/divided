@@ -36,7 +36,7 @@ class MoveGenerator
   end
 
   def tentative_move_data_for_xy(x,y)
-    return [] if collisions_for_xy?(x,y)
+    return [] if player_pos == [x,y] || collisions_for_xy?(x,y)
 
     [].tap do |tentatives|
       if !all_enemy_pos.any? {|p| p == [x,y] }
