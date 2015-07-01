@@ -5,7 +5,7 @@ selectionOverlay = (options) ->
   {xPosToX,yPosToY} = scaler
 
   activeGlows = game.add.group()
-  activeGlows.alpha = 0
+  activeGlows.alpha = 1
   blink = null
   texts = game.add.group()
   glows = []
@@ -50,9 +50,9 @@ selectionOverlay = (options) ->
       action = rotation[rotationIndex % rotation.length]
 
       if action == 'attack'
-        glow.frame = 0
+        glow.frame = 4
       else
-        glow.frame = 1
+        glow.frame = 0
 
       if !text?
         text = getText(action.toUpperCase(), xPos, yPos)
@@ -92,6 +92,7 @@ selectionOverlay = (options) ->
         g = game.add.sprite(x,y,'rgb_glow')
         glows.push(g)
         g.anchor.set(0.5)
+        g.smoothed = false
       g.scale.set(scaler.scale)
       activeGlows.add(g)
       g
@@ -115,13 +116,6 @@ selectionOverlay = (options) ->
         deferredSelection.reject(new Error("No selection!"))
       currentDefer = Q.defer()
       deferredSelection = currentDefer
-      tweenLoop = () ->
-        blink = game.add.tween(activeGlows).to({alpha: 0.6},extConfig.blinkDelay,Phaser.Easing.Circular.Out,true)
-        blink.onComplete.add () ->
-          blink = game.add.tween(activeGlows).to({alpha: 0.0},extConfig.blinkDelay,Phaser.Easing.Circular.In,true)
-          blink.onComplete.add () ->
-            tweenLoop()
-      tweenLoop()
       $.each mm.all, (i,at) ->
         glow = glowForActionsAtPos(Object.keys(at.moves),at.x,at.y)
         glow.inputEnabled = true

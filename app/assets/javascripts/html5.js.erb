@@ -98,7 +98,7 @@ $(function() {
       loadingText.anchor.set(0.5);
       <%= %w(starfield.jpg 100x100_pathway_dirt.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       window.divided.playerRenderer.preload(game);
-      game.load.spritesheet('rgb_glow', <%= asset_path('rgb_30.png').inspect %>, 10, 10, 3);
+      game.load.spritesheet('rgb_glow', <%= asset_path('rotating_colors.png').inspect %>, 10, 10, 12);
       game.load.image('hourglass', <%= asset_path('hourglass_small.png').inspect %>);
       game.load.image('player_blip', <%= asset_path('green_blip_19.png').inspect %>);
     },
