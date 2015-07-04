@@ -40,7 +40,7 @@ describe "move submission" do
     it 'does not permit a move to be posted twice' do
       move = nil
       game.next_round do |r|
-        move = available_moves(p1.uuid).find {|i| i.action == 'run' && i.x == 0 && i.y == 0 }
+        move = available_moves(p1.uuid).find {|i| i.action == 'run' && i.x == 1 && i.y == 1 }
         move.post
       end
 
@@ -58,6 +58,17 @@ describe "move submission" do
     it 'does not allow a move out of bounds' do
       game.next_round do |r|
         expect { r.choose(p1).run(-1,0) }.to raise_error
+      end
+    end
+
+    it 'defaults to not moving at all' do
+      loc = nil
+      game.next_round do |r|
+        loc = r.locate(p1)
+      end
+
+      game.next_round do |r|
+        expect(r.locate(p1)).to eql(loc)
       end
     end
 

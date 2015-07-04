@@ -22,6 +22,17 @@ class MoveGenerator
     end
   end
 
+  def stationary_move
+    Move.new(
+      player_uuid: player.uuid,
+      id: 'pass',
+      round_id: round.index,
+      x: init_pos_map[player][0],
+      y: init_pos_map[player][1],
+      action: 'wait'
+    )
+  end
+
   private
 
   def tentative_move_data

@@ -31,6 +31,10 @@ describe Participant do
   describe '.moves' do
     subject { participant.moves }
 
+    it 'does not include the spot they stand on' do
+      expect(subject.any? {|m| [m.x,m.y] == start_spot }).to eql(false)
+    end
+
     context 'for someone in the corner' do
       let(:start_spot) { [0,0] }
 
@@ -43,7 +47,7 @@ describe Participant do
       let(:start_spot) { [5,5] }
 
       it 'includes a full radius around them' do
-        expect(subject.size).to eql(49)
+        expect(subject.size).to eql(48)
       end
     end
   end

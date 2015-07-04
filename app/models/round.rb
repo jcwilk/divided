@@ -142,7 +142,7 @@ class Round
   end
 
   def final_pos_map
-    new_players_pos_map.merge(collided_move_map)
+    new_players_pos_map.merge(collided_pos_map)
   end
 
   def stationary_too_long?(options)
@@ -176,7 +176,7 @@ class Round
 
   def default_move_map
     participating_players.reduce({}) do |acc,el|
-      acc[el] = Participant.new(round: self, player: el).default_move
+      acc[el] = Participant.new(round: self, player: el).stationary_move
       acc
     end
   end
@@ -185,7 +185,7 @@ class Round
     default_move_map.merge(settled_move_map)
   end
 
-  def collided_move_map
+  def collided_pos_map
     sim = CollisionSimulator.new
     total_move_map.reduce({}) {|a,(k,v)| a.merge(k => [v.x,v.y]) }.tap do |m|
       m.each do |uuid,pos|

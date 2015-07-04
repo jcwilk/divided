@@ -3,12 +3,7 @@ class Participant < Hashie::Dash
   property :round,  required: true
 
   delegate :uuid, to: :player
-  delegate :moves, to: :move_generator
-
-  def default_move
-    m = moves
-    m.find {|el| [el.x,el.y] == init_pos } || m.first
-  end
+  delegate :moves, :stationary_move, to: :move_generator
 
   def choose_move(id)
     move_by_id(id).tap do |move|

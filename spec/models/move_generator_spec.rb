@@ -11,6 +11,18 @@ describe MoveGenerator do
   let(:round) { double(init_pos_map: init_pos_map, index: 5) }
   let(:gen) { MoveGenerator.new(player: player, round: round) }
 
+  describe 'stationary_move' do
+    subject { gen.stationary_move }
+
+    it 'has an action of "wait"' do
+      expect(subject.action).to eql('wait')
+    end
+
+    it 'has coordinates matching those of the player' do
+      expect([subject.x,subject.y]).to eql(init_pos_map[player])
+    end
+  end
+
   describe 'moves' do
     subject { gen.moves }
 
