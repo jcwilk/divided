@@ -8,8 +8,11 @@ describe "Player Pool", () ->
 
   beforeEach () ->
     options = {
-      xPosToX: (x,y) -> [x,y]
-      yPosToY: (x,y) -> [x,y]
+      scaler: {
+        xPosToX: (x,y) -> [x,y],
+        yPosToY: (x,y) -> [x,y],
+        scale: 1
+      }
       extConfig: {animationDelay: 100}
       game: {
         add: {

@@ -2,8 +2,7 @@
 
 describe "Selection Overlay", () ->
   options = {
-    xPosToX: (x,y) -> [x,y]
-    yPosToY: (x,y) -> [x,y]
+    scaler: {}
     extConfig: {blinkDelay: 100}
     game: {
       add: {
