@@ -52,17 +52,17 @@ class MoveGenerator
 
     [].tap do |tentatives|
       if !all_enemy_pos.any? {|p| p == [x,y] }
-        tentatives << {
-          x: x,
-          y: y,
-          action: 'run'
-        }
-
         if !attacked_recently? && all_enemy_pos.any? {|epos| next_to(epos,[x,y]) && next_to(epos,player_pos) }
           tentatives << {
             x: x,
             y: y,
             action: 'attack'
+          }
+        elsif !(all_enemy_pos.any? {|epos| next_to(epos,player_pos) } && !next_to([x,y],player_pos))
+          tentatives << {
+            x: x,
+            y: y,
+            action: 'run'
           }
         end
       end

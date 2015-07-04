@@ -80,6 +80,14 @@ describe MoveGenerator do
         it 'includes attack actions for the tiles adjacent to the enemy' do
           expect(subject.any? {|m| m.x == 1 && m.y == 3 && m.action == 'attack' }).to eql(true)
         end
+
+        it 'does not include run actions for the tiles adjacent to the enemy' do
+          expect(subject.any? {|m| m.x == 1 && m.y == 2 && m.action == 'run' }).to eql(false)
+        end
+
+        it 'only includes adjacent run actions' do
+          expect(subject.any? {|m| m.action == 'run' && ((m.x - 1).abs > 1 || (m.y - 1).abs > 1) }).to eql(false)
+        end
       end
 
       context 'when the collision sim does not return collisions' do

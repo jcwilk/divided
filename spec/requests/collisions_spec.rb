@@ -32,14 +32,14 @@ describe 'collisions between players' do
       context 'and the player then moves away' do
         before do
           game.next_round do |r|
-            r.choose(p1).run(0,0)
+            r.choose(p1).run(0,1)
           end
         end
 
         it 'permits the move' do
           game.next_round do |r|
             end_at = r.locate(p1)
-            expect(end_at).to eql([0,0])
+            expect(end_at).to eql([0,1])
           end
         end
       end
