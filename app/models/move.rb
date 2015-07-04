@@ -10,4 +10,8 @@ class Move < Hashie::Dash
     x >= 0 && x <= 9 &&
     y >= 0 && y <= 9
   end
+
+  def pos
+    [x,y]
+  end
 end

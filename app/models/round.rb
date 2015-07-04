@@ -69,6 +69,7 @@ class Round
       ]
     end
 
+    @attacked_map = {}
     @settled_move_map = {}
     @new_players_pos_map = {}
   end
@@ -107,6 +108,7 @@ class Round
 
   def complete
     killed_players.each(&:kill)
+    settled_move_map.each {|p,m| @attacked_map[p] = true if m.action == 'attack' }
 
     RoomEventsController.publish('/room_events/advance', current_data.to_json)
   end
@@ -134,9 +136,10 @@ class Round
 
   def killed_players
     participating_players.select do |p|
-      x,y = init_pos_map[p]
+      map = collided_pos_map
+      x,y = map[p]
 
-      settled_move_map.any? {|k,v| k != p && v.action == 'attack' && (v.x - x).abs <= 1 && (v.y - y).abs <= 1 } \
+      map.any? {|e,(ex,ey)| e != p && settled_move_map[e] && settled_move_map[e].action == 'attack' && (ex - x).abs <= 1 && (ey - y).abs <= 1 } \
         || stationary_too_long?(player: p)
     end
   end
@@ -158,6 +161,13 @@ class Round
     return false if father.nil? || [x,y] != init_pos_map[player]
 
     father.stationary_for?(count-1, player: player, x: x, y: y)
+  end
+
+  def attacked_in_last_x_moves?(player, n)
+    if n >= 0
+      return @attacked_map[player] || (father && father.attacked_in_last_x_moves?(player,n-1))
+    end
+    false
   end
 
   private

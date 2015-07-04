@@ -1,11 +1,12 @@
 class MoveGenerator
-  delegate :uuid, to: :player
+  delegate :uuid, to: :participant
+  delegate :player, :attacked_recently?, to: :participant
   delegate :init_pos_map, to: :round
 
-  attr_reader :player, :round
+  attr_reader :participant, :round
 
-  def initialize(player:, round:)
-    @player = player
+  def initialize(participant:, round:)
+    @participant = participant
     @round = round
   end
 
@@ -57,7 +58,7 @@ class MoveGenerator
           action: 'run'
         }
 
-        if all_enemy_pos.any? {|ex,ey| (ex - x).abs <= 1 && (ey - y).abs <= 1 }
+        if !attacked_recently? && all_enemy_pos.any? {|epos| next_to(epos,[x,y]) && next_to(epos,player_pos) }
           tentatives << {
             x: x,
             y: y,
@@ -67,6 +68,12 @@ class MoveGenerator
       end
     end
   end
+
+  def next_to(pos1,pos2)
+    x1,y1 = pos1
+    x2,y2 = pos2
+    pos1 != pos2 && (x1 - x2).abs <= 1 && (y1 - y2).abs <= 1
+  end  
 
   def all_enemy_pos
     init_pos_map.select {|k,v| k != player }.values

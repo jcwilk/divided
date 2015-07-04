@@ -19,10 +19,14 @@ class Participant < Hashie::Dash
     round.index
   end
 
+  def attacked_recently?
+    round.attacked_in_last_x_moves?(player,2)
+  end
+
   private
 
   def move_generator
-    MoveGenerator.new(player: player, round: round)
+    MoveGenerator.new(participant: self, round: round)
   end
 
   def init_pos

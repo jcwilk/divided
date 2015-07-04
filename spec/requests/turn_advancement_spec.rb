@@ -1,8 +1,6 @@
 require 'rails_helper'
 
 describe "move submission" do
-  let(:starting_move) { [0,0] }
-  let(:client) { dv_client }
   let(:p1) { Player.new_active }
 
   em_around
@@ -129,53 +127,6 @@ describe "move submission" do
           expect(Time.now - first_turn_time).to be > 1.5
           expect(Time.now - first_turn_time).to be < 3.5
         end
-      end
-    end
-  end
-
-  context 'after one player attacks another' do
-    let(:p2) { Player.new_active }
-    let!(:game) {
-      GameRunner.new(self, {
-        p1 => [3,3],
-        p2 => [0,0]
-      })
-    }
-
-    before do
-      game.next_round do |r|
-        r.choose(p2).attack(2,2)
-      end
-    end
-
-    it 'permits the moves' do
-      game.next_round do |r|
-        expect(r.locate(p2)).to eql([2,2])
-      end
-    end
-
-    it 'reports only the player who did not move as killed' do
-      game.next_round do |r|
-        expect(r.killed).to eql([p1.uuid])
-      end
-    end
-
-    it 'does not permit further moves from the dead player' do
-      game.next_round do |r|
-        expect(r.participating?(p1)).to eql(false)
-      end
-    end
-
-    it 'reverts to single player mode for the living player' do
-      last_time = nil
-
-      game.next_round do |r|
-        last_time = Time.now
-        r.choose(p2).run(3,3)
-      end
-
-      game.next_round do |r|
-        expect(Time.now - last_time).to be < Round::ROUND_DURATION
       end
     end
   end
