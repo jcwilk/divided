@@ -65,34 +65,39 @@ $(function() {
   var loadingTextStyle = { font: "40px Arial", fill: "#ffffff", align: "center" };
   var loadingText;
 
-  var game = new Phaser.Game(600, 600, Phaser.AUTO, 'divided-viewport', {
+  var firstHeight = window.innerHeight;
+  var firstWidth = window.innerWidth;
+
+  var resizeWorld = function() {
+    height = window.innerHeight;
+    width = window.innerWidth;
+    game.scale.setGameSize(width,height);
+    min = width > height*0.95 ? height*0.95 : width;
+    var scale = Math.floor(min/100);
+    if(scale < 1) scale = 1;
+    if(floor !== undefined) {
+      floor.scale.x = scale;
+      floor.scale.y = scale;
+    }
+    scaler.scale = scale;
+
+    if(selectionOverlay !== undefined) selectionOverlay.redraw()
+    if(playerPool !== undefined) playerPool.redraw()
+    game.world.setBounds(0-width/2,0-height/2,width,height);
+    game.camera.x = 0-width/2;
+    game.camera.y = 0-height/2;
+  }
+
+  var game = new Phaser.Game(firstWidth, firstHeight, Phaser.AUTO, 'divided-viewport', {
     init: function() {
-      game.scale.scaleMode = Phaser.ScaleManager.RESIZE;
+      game.scale.scaleMode = Phaser.ScaleManager.NO_SCALE;
       game.scale.pageAlignHorizontally = true;
       game.scale.pageAlignVertically = true;
-      game.world.setBounds(-300,-300,600,600);
-      game.camera.x = -300;
-      game.camera.y = -300;
-    },
-    resize: function(x,y) {
-      min = x > y*0.95 ? y*0.95 : x;
-      scale = Math.floor(min/100);
-      if(scale < 1) scale = 1;
-      if(floor !== undefined) {
-        floor.scale.x = scale;
-        floor.scale.y = scale;  
-      }
-      scaler.scale = scale;
-
-      if(selectionOverlay !== undefined) selectionOverlay.redraw()
-      if(playerPool !== undefined) playerPool.redraw()
-
-      game.world.setBounds(0-x/2,0-y/2,x,y);
-      game.camera.x = 0-x/2;
-      game.camera.y = 0-y/2;
+      resizeWorld();
+      $(window).resize(resizeWorld);
     },
     preload: function() {
-      game.scale.fullScreenScaleMode = Phaser.ScaleManager.RESIZE;
+      game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
       game.input.onDown.add(function(){ game.scale.startFullScreen(false);},this);
       loadingText = game.add.text(0, 0, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
