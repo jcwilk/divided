@@ -28,8 +28,9 @@ module DV
           fail 'Missing round!'
         elsif player.nil?
           error! 'Unknown uuid!', 404
+        elsif !round.join(player)
+          error! 'Player unable to join!', 400
         else
-          round.join(player)
           present player, with: DV::Representers::Participant
         end
       end

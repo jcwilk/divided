@@ -120,14 +120,15 @@ class Round
   end
 
   def join(player)
-    #TODO: more graceful?
-    fail "Already joined!" if participants.any? {|p| p.uuid == player.uuid }
+    return false if participants.any? {|p| p.uuid == player.uuid }
 
     new_players_pos_map[player] = get_starting_move
 
     #TODO: should advanced only happen in later ticks?
     #TODO: this is redundant with add_move
     Round.advance if unsettled_players.empty?
+
+    true
   end
 
   def participants
