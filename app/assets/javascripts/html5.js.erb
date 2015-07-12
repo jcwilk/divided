@@ -98,7 +98,10 @@ $(function() {
     },
     preload: function() {
       game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
-      game.input.onDown.add(function(){ game.scale.startFullScreen(false);},this);
+      game.input.onDown.add(function(){
+        game.scale.startFullScreen(false);
+        game.input.onDown.removeAll();
+      },this);
       loadingText = game.add.text(0, 0, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
       <%= %w(starfield.jpg 100x100_pathway_dirt.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
