@@ -83,13 +83,15 @@ $(function() {
 
     if(selectionOverlay !== undefined) selectionOverlay.redraw()
     if(playerPool !== undefined) playerPool.redraw()
+    if(background !== undefined) background.scale.set(scaler.scale)
     game.world.setBounds(0-width/2,0-height/2,width,height);
     game.camera.x = 0-width/2;
     game.camera.y = 0-height/2;
   }
 
-  var game = new Phaser.Game(firstWidth, firstHeight, Phaser.AUTO, 'divided-viewport', {
+  var game = new Phaser.Game(firstWidth, firstHeight, Phaser.CANVAS, 'divided-viewport', {
     init: function() {
+      Phaser.Canvas.setSmoothingEnabled(game.context, false);
       game.scale.scaleMode = Phaser.ScaleManager.NO_SCALE;
       game.scale.pageAlignHorizontally = true;
       game.scale.pageAlignVertically = true;
@@ -104,14 +106,16 @@ $(function() {
       },this);
       loadingText = game.add.text(0, 0, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
-      <%= %w(starfield.jpg 100x100_pathway_dirt.png).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
+      <%= %w(space_90.gif 100x100_pathway_dirt.gif).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       window.divided.playerRenderer.preload(game);
       game.load.spritesheet('rgb_glow', <%= asset_path('rotating_colors.png').inspect %>, 10, 10, 12);
       game.load.image('hourglass', <%= asset_path('hourglass_small.png').inspect %>);
       game.load.image('player_blip', <%= asset_path('green_blip_19.png').inspect %>);
     },
     create: function(){
-      background = game.add.tileSprite(-1500, -1500, 3000, 3000, 'starfield');
+      background = game.add.tileSprite(-1500, -1500, 3000, 3000, 'space_90');
+      background.scale.set(scaler.scale)
+
       floor = game.add.sprite(0,0,'100x100_pathway_dirt');
       floor.anchor.set(0.5);
       floor.smoothed = false;
