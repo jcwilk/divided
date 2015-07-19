@@ -109,8 +109,6 @@ $(function() {
       <%= %w(space_90.gif 100x100_pathway_dirt.gif).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       window.divided.playerRenderer.preload(game);
       game.load.spritesheet('rgb_glow', <%= asset_path('rotating_colors.png').inspect %>, 10, 10, 12);
-      game.load.image('hourglass', <%= asset_path('hourglass_small.png').inspect %>);
-      game.load.image('player_blip', <%= asset_path('green_blip_19.png').inspect %>);
     },
     create: function(){
       background = game.add.tileSprite(-1500, -1500, 3000, 3000, 'space_90');

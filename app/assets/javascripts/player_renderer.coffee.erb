@@ -9,7 +9,7 @@ window.divided.playerRenderer = (options) ->
   } = options
 
   {xPosToX,yPosToY} = scaler
-  
+
   waitingMap = {}
   choosingUuids = []
   waitingIcons = game.add.group()
@@ -29,9 +29,7 @@ window.divided.playerRenderer = (options) ->
       spritesByUuid[uuid] = doom
 
       if uuid == directingPlayerUuid
-        doom.blip = game.add.sprite(0,-12,'player_blip',false)
-        doom.blip.anchor.setTo(0.5)
-        doom.blip.scale.set(0.25)
+        doom.blip = game.add.sprite(-2,-14,'player_blip',false)
         doom.blip.smoothed = false
         doom.addChild(doom.blip)
         loadingText.destroy()
@@ -69,15 +67,18 @@ window.divided.playerRenderer = (options) ->
 
         icon = waitingIcons.getFirstDead()
         x = xPosToX(pos[0])-5*scaler.scale
-        y = yPosToY(pos[1])-14*scaler.scale
+        y = yPosToY(pos[1])-18*scaler.scale
 
         if icon
           icon.reset(x,y)
           icon.alpha = 1
+          icon.animations.play('drip',3,true)
         else
           icon = waitingIcons.create(x,y,'hourglass')
           icon.smoothed = false
-          icon.scale.set(scaler.scale/4)
+          icon.scale.set(scaler.scale)
+          icon.animations.add('drip')
+          icon.animations.play('drip',3,true)
 
         game.add.tween(icon).to({y: y-10},500,Phaser.Easing.Default,true,0,Number.MAX_VALUE,true)
         waitingMap[uuid] = icon
@@ -108,3 +109,5 @@ window.divided.playerRenderer = (options) ->
 
 window.divided.playerRenderer.preload = (game) ->
   game.load.image('ninja', <%= asset_path('ninja.png').inspect %>)
+  game.load.spritesheet('hourglass', <%= asset_path('hourglass_sheet.gif').inspect %>, 7, 9, 3);
+  game.load.image('player_blip', <%= asset_path('green_blip_5.gif').inspect %>);
