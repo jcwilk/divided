@@ -41,7 +41,7 @@ $(function() {
     },
     scale: 4
   }
-  
+
   var turnCount = 0;
 
   var faye = new Faye.Client('/faye');
@@ -132,14 +132,16 @@ $(function() {
       });
 
       playerPool = window.divided.playerPool({
-        scaler:                 scaler, 
+        scaler:                 scaler,
         game:                   game,
         loadingText:            loadingText,
         directingPlayerUuid:    player_uuid,
         extConfig:              sliderContainer,
         onDirectingPlayerDeath: function() {
           isDead = true;
-          turnTween.stop();
+          if(turnTween !== undefined) {
+            turnTween.stop();
+          }
           background.alpha = 1;
           game.input.onUp.add(function(p) {
             location.reload();

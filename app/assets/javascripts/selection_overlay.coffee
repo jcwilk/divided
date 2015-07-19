@@ -6,7 +6,6 @@ selectionOverlay = (options) ->
 
   activeGlows = game.add.group()
   activeGlows.alpha = 1
-  blink = null
   texts = game.add.group()
   glows = []
 
@@ -30,46 +29,27 @@ selectionOverlay = (options) ->
       })
       t.font = 'Arial'
       t.fontWeight = 'bold'
-      t.fontSize = 4*scaler.scale
       t.anchor.set(0.5)
       t.angle = 25
       texts.add(t)
+    t.fontSize = 4*scaler.scale
     t
 
   glowForActionsAtPos = (rotation,xPos,yPos) ->
     x = xPosToX(xPos)
     y = yPosToY(yPos)
     glow = obj.getGlow(x,y)
-    text = null
-    looping = true
 
-    tweenForIndex = (rotationIndex) ->
-      if !looping
-        return
+    action = rotation[0]
 
-      action = rotation[rotationIndex % rotation.length]
+    if action == 'attack'
+      glow.frame = 4
+    else
+      glow.frame = 0
 
-      if action == 'attack'
-        glow.frame = 4
-      else
-        glow.frame = 0
-
-      if !text?
-        text = getText(action.toUpperCase(), xPos, yPos)
-      else
-        if text.text != action.toUpperCase()
-          text.setText(action.toUpperCase())
-
-      if text.fontSize != 4*scaler.scale
-          text.fontSize = 4*scaler.scale
-      
-      window.setTimeout((() -> tweenForIndex(rotationIndex+1)), extConfig.blinkDelay*2)
-    tweenForIndex(0)
+    text = getText(action.toUpperCase(), xPos, yPos)
 
     glow.fadeAndKill = () ->
-      if !looping
-        return
-      looping = false
       glow.events.onInputUp.removeAll()
       glow.kill()
       text.kill()
@@ -78,7 +58,7 @@ selectionOverlay = (options) ->
   mm = window.divided.moveMatrix()
 
   deferredSelection = null
-  lastParticipant = null
+  lastMoves = null
 
   obj = {
     at: (x,y) ->
@@ -99,80 +79,66 @@ selectionOverlay = (options) ->
     clearGlows: () ->
       activeGlows.callAllExists('fadeAndKill',true)
       activeGlows.removeAll()
-      if blink?
-        blink.stop()
     reset: () ->
       mm = window.divided.moveMatrix()
       obj.clearGlows()
-      deferredSelection = null
-      lastParticipant = null
-    redraw: () ->
-      if lastParticipant?
-        p = lastParticipant
-        obj.reset()
-        obj.selectionForParticipant(p)
-    drawMatrixGlows: () ->
       if deferredSelection?
-        deferredSelection.reject(new Error("No selection!"))
-      currentDefer = Q.defer()
-      deferredSelection = currentDefer
+        deferredSelection.reject(new Error("Resetting!"))
+        deferredSelection = null
+      lastMoves = null
+    redraw: () ->
+      obj.clearGlows()
+      if lastMoves?
+        obj.drawRemoteMoves(lastMoves)
+    drawMatrixGlows: () ->
+      currentDefer = deferredSelection
       $.each mm.all, (i,at) ->
         glow = glowForActionsAtPos(Object.keys(at.moves),at.x,at.y)
         glow.inputEnabled = true
         glow.events.onInputUp.add (g) ->
           obj.clearGlows()
 
-          postToUrl = (u) ->
-            currentDefer.resolve(u)
-            $.ajax(u, {
-              type: "POST",
-              statusCode: {
-                422: (response) ->
-                  #TODO: move this up out of the POST
-                  #game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
-                500: (response) ->
-                  #not really relevant anymore
-                  #location.reload()
-                403: (response) ->
-                  #TODO: auth lol
-                  #location.reload()
-              }
-            })
+          url = at.moves[Object.keys(at.moves)[0]]
 
-          if Object.keys(at.moves).length == 1
-            postToUrl(at.moves[Object.keys(at.moves)[0]])
-          else
-            offsets = [
-              [+1,+1]
-              [-1,+1]
-              [+1,-1]
-              [-1,-1]
-            ]
-            $.each at.moves, (name, url) ->
-              offset = offsets.pop()
-              subGlow = glowForActionsAtPos([name], at.x+offset[0], at.y+offset[1])
-              subGlow.inputEnabled = true
-              subGlow.events.onInputUp.add((t) ->
-                obj.clearGlows()
-                postToUrl(url)
-              this)
-      #debug()
-      return currentDefer
+          currentDefer.resolve(url)
+          $.ajax(url, {
+            type: "POST",
+            statusCode: {
+              422: (response) ->
+                #TODO: move this up out of the POST
+                #game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
+              500: (response) ->
+                #not really relevant anymore
+                #location.reload()
+              403: (response) ->
+                #TODO: auth lol
+                #location.reload()
+            }
+          })
     selectionForParticipant: (participant) ->
       obj.reset()
-      lastParticipant = participant
-      
-      promise = participant.links['dv:moves'].fetch().then((moves) ->
-        $.each moves.embedded.moves, (i,move) ->
-          newMoves = {}
-          newMoves[move.props.action] = move.url()
-          obj.at(move.props.x,move.props.y).addMoves(newMoves);
 
-        return obj.drawMatrixGlows().promise
+      promise = participant.links['dv:moves'].fetch().then((moves) ->
+        #TODO: this could have unpredictable results if called a second time before it finishes
+        lastMoves = moves
+        if deferredSelection?
+          deferredSelection.reject(new Error("No selection!"))
+        deferredSelection = Q.defer()
+
+        obj.drawRemoteMoves(lastMoves)
+
+        return deferredSelection.promise
       ).catch (error) ->
         console.log("Failed promise!")
         console.log(error)
         console.log(error.stack)
       return promise
+    drawRemoteMoves: (moves) ->
+      $.each moves.embedded.moves, (i,move) ->
+        newMoves = {}
+        newMoves[move.props.action] = move.url()
+        obj.at(move.props.x,move.props.y).addMoves(newMoves);
+
+      obj.drawMatrixGlows()
   }
 window.divided.selectionOverlay = selectionOverlay
