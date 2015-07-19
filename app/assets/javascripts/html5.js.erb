@@ -83,7 +83,10 @@ $(function() {
 
     if(selectionOverlay !== undefined) selectionOverlay.redraw()
     if(playerPool !== undefined) playerPool.redraw()
-    if(background !== undefined) background.scale.set(scaler.scale)
+    if(background !== undefined) {
+      background.reset(-400*scaler.scale,-400*scaler.scale)
+      background.scale.set(scaler.scale)
+    }
     game.world.setBounds(0-width/2,0-height/2,width,height);
     game.camera.x = 0-width/2;
     game.camera.y = 0-height/2;
@@ -111,7 +114,20 @@ $(function() {
       game.load.spritesheet('rgb_glow', <%= asset_path('rotating_colors.png').inspect %>, 10, 10, 12);
     },
     create: function(){
-      background = game.add.tileSprite(-1500, -1500, 3000, 3000, 'space_90');
+      //hax to imitate a tilesprite because phaser is terrible at sharp-scaling them
+      background = null
+      for(x = 0; x < 800; x+= 90) {
+        for(y = 0; y < 800; y+= 90) {
+          bg = game.add.sprite(x,y,'space_90')
+          bg.smoothed = false
+          if(background === null) {
+            background = bg
+          } else {
+            background.addChild(bg)
+          }
+        }
+      }
+      background.reset(-400*scaler.scale,-400*scaler.scale)
       background.scale.set(scaler.scale)
 
       floor = game.add.sprite(0,0,'100x100_pathway_dirt');
