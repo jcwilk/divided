@@ -59,22 +59,20 @@ describe "Remote Scaler", ->
       finishLoading()
       expect(onFinish).toHaveBeenCalled()
 
-    describe 'with an already existing sprite', ->
+    describe 'with an already existing sprite from another scale', ->
       beforeEach ->
         rs.setScale(2, ->)
         finishLoading()
         rs.getSprite('apple', x: 10, y: 10)
 
-      it 'kills the old sprite', ->
+      it 'immediately kills the old sprite', ->
         spyOn(sprites[0],'kill')
         rs.setScale(4, ->)
-        finishLoading()
         expect(sprites[0].kill).toHaveBeenCalled()
 
-      it 'adds a new matching sprite of the appropriate scale', ->
+      it 'adds a new matching sprite of the appropriate scale on complete', ->
         rs.setScale(4, ->)
+        expect(sprites[1]).toBeUndefined()
         finishLoading()
         expect(sprites[1].x).toEqual(40)
         expect(sprites[1].y).toEqual(40)
-
-

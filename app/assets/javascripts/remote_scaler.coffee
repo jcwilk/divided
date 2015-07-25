@@ -7,6 +7,14 @@ window.divided.remoteScaler = (options) ->
   currentSprites = []
   onLoadComplete = null
 
+  clearAll = ->
+    $.each currentSprites, (i,scaledSprite) ->
+      scaledSprite.kill()
+
+  drawAll = ->
+    $.each currentSprites, (i,scaledSprite) ->
+      scaledSprite.draw()
+
   obj = {
     registerPaths: (newPaths) -> $.extend(registeredPaths,newPaths)
     setScale: (s,cb) ->
@@ -17,24 +25,23 @@ window.divided.remoteScaler = (options) ->
       game.load.onLoadComplete.add ->
         #TODO: this would behave oddly if setScale calls stacked up
         game.load.onLoadComplete.removeAll()
-        $.each currentSprites, (i,scaledSprite) ->
-          scaledSprite.redraw()
+        drawAll()
         cb()
+
       game.load.start()
+      clearAll()
 
     getSprite: (label,options) ->
       {x,y} = options
 
-      scaledSprite = {}
+      scaledSprite = {
+        draw: ->
+          scaledSprite.sprite = game.add.sprite(x*scale,y*scale,label+'.x'+scale)
+        kill: ->
+          scaledSprite.sprite.kill()
+      }
 
-      draw = ->
-        scaledSprite.sprite = game.add.sprite(x*scale,y*scale,label+'.x'+scale)
-
-      scaledSprite.redraw = ->
-        scaledSprite.sprite.kill()
-        draw()
-
-      draw()
+      scaledSprite.draw()
 
       currentSprites.push(scaledSprite)
       scaledSprite
