@@ -10,6 +10,7 @@ window.divided.remoteScaler = (options) ->
   spritesMap = {}
   currentSprites = []
   isRescaling = true
+  rescaleCallbacks = []
 
   clearAllLiving = ->
     eachLivingScaledSprite (scaledSprite) ->
@@ -31,12 +32,7 @@ window.divided.remoteScaler = (options) ->
     registerPaths: (newPaths) -> $.extend(registeredPaths,newPaths)
     setScale: (s,cb) ->
       scale = s
-      isRescaling = true
-
-      onRescaleComplete = ->
-        isRescaling = false
-        drawAllLiving()
-        cb()
+      cb?= ->
 
       clearAllLiving()
       spritesMap[scale]?= []
@@ -47,13 +43,20 @@ window.divided.remoteScaler = (options) ->
         $.each(registeredPaths, (label,sizeMap) ->
           game.load.image(label+'.x'+scale,sizeMap['x'+scale])
         )
-        game.load.onLoadComplete.add ->
-          #TODO: this would behave oddly if setScale calls stacked up
-          game.load.onLoadComplete.removeAll()
-          onRescaleComplete()
-        game.load.start()
+        rescaleCallbacks.push(cb)
+        if rescaleCallbacks.length == 1
+          isRescaling = true
+          game.load.onLoadComplete.addOnce ->
+            isRescaling = false
+            drawAllLiving()
+            $.each(rescaleCallbacks, (i,e) -> e())
+            rescaleCallbacks = []
+
+          game.load.start()
       else
-        onRescaleComplete()
+        isRescaling = false
+        drawAllLiving()
+        cb()
 
     getSprite: (label,options) ->
       {x,y} = options
@@ -61,22 +64,23 @@ window.divided.remoteScaler = (options) ->
       scaledSprite = {
         alive: true
         draw: ->
-          if firstDead = getFirstDeadCurrentSprite()
-            scaledSprite.sprite = firstDead
-            firstDead.reset(x*scale,y*scale)
-          else
-            scaledSprite.sprite = game.add.sprite(x*scale,y*scale,label+'.x'+scale)
-            currentSprites.push(scaledSprite.sprite)
+          if !isRescaling
+            if firstDead = getFirstDeadCurrentSprite()
+              scaledSprite.sprite = firstDead
+              firstDead.reset(x*scale,y*scale)
+            else
+              scaledSprite.sprite = game.add.sprite(x*scale,y*scale,label+'.x'+scale)
+              currentSprites.push(scaledSprite.sprite)
         clear: ->
-          scaledSprite.sprite.kill()
-          scaledSprite.sprite = null
+          if scaledSprite.sprite?
+            scaledSprite.sprite.kill()
+            scaledSprite.sprite = null
         kill: ->
           scaledSprite.clear()
           scaledSprite.alive = false
         reset: ->
           scaledSprite.alive = true
-          if !isRescaling
-            scaledSprite.draw()
+          scaledSprite.draw()
       }
 
       scaledSprite.draw()

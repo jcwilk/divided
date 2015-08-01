@@ -16,9 +16,11 @@ describe "Remote Scaler", ->
         image: ->
         start: ->
         onLoadComplete: {
-          call: -> $.each(onLoadCompleteCallbacks, (i,e) -> e())
-          add: (cb) -> onLoadCompleteCallbacks.push(cb)
-          removeAll: -> onLoadCompleteCallbacks = []
+          call: ->
+            $.each(onLoadCompleteCallbacks, (i,e) -> e())
+            onLoadCompleteCallbacks = []
+          addOnce: (cb) ->
+            onLoadCompleteCallbacks.push(cb)
         }
       }
       add: {
@@ -117,6 +119,37 @@ describe "Remote Scaler", ->
         rs.setScale(2, ->)
         expect(sprites[0].reset).toHaveBeenCalled()
 
+    describe 'when switching to a second new scale before the first rescale has completed', ->
+      firstCb = -> cbContainer.push('first')
+      secondCb = -> cbContainer.push('second')
+      cbContainer = null
+
+      beforeEach ->
+        cbContainer = []
+        rs.setScale(2, firstCb)
+        rs.getSprite('apple', x: 10, y: 10)
+        rs.setScale(4, secondCb)
+
+      it 'calls both callbacks at once, in order, on complete', ->
+        expect(cbContainer).toEqual([])
+        finishLoading()
+        expect(cbContainer).toEqual(['first','second'])
+
+      it 'draws the sprite only for the last scale', ->
+        finishLoading()
+        expect($.grep(sprites, (s) -> s.label == 'apple.x4').length).toEqual(1)
+        expect($.grep(sprites, (s) -> s.label == 'apple.x2').length).toEqual(0)
+
+    # describe 'when returning to a previously rendered scale before a new scale has completed', ->
+    #   beforeEach ->
+    #     rs.stScale(2, ->)
+    #     finishLoading()
+    #     rs.getSprite('apple', x: 10, y: 10)
+    #     rs.setScale(4, ->)
+    #     rs.setScale(2, ->)
+
+      #it 'renders '
+
   describe 'scaledSprite.kill', ->
     scaledSprite = null
     sprite = null
@@ -158,7 +191,6 @@ describe "Remote Scaler", ->
       expect(sprites.length).toEqual(oldLength)
 
     it 'immediately resets an old sprite', ->
-      #sprite happens to be the only sprite, luckily
       spyOn(sprite, 'reset')
       scaledSprite.reset()
       expect(sprite.reset).toHaveBeenCalled()
