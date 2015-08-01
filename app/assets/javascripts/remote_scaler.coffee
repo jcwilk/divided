@@ -25,8 +25,9 @@ window.divided.remoteScaler = (options) ->
 
   eachLivingScaledSprite = (cb) ->
     $.each allScaledSprites, (i, scaledSprite) ->
-      if scaledSprite.alive
-        cb(scaledSprite)
+      return if !scaledSprite.alive
+
+      cb(scaledSprite)
 
   obj = {
     registerPaths: (newPaths) -> $.extend(registeredPaths,newPaths)
@@ -64,17 +65,19 @@ window.divided.remoteScaler = (options) ->
       scaledSprite = {
         alive: true
         draw: ->
-          if !isRescaling
-            if firstDead = getFirstDeadCurrentSprite()
-              scaledSprite.sprite = firstDead
-              firstDead.reset(x*scale,y*scale)
-            else
-              scaledSprite.sprite = game.add.sprite(x*scale,y*scale,label+'.x'+scale)
-              currentSprites.push(scaledSprite.sprite)
+          return if isRescaling
+
+          if firstDead = getFirstDeadCurrentSprite()
+            scaledSprite.sprite = firstDead
+            firstDead.reset(x*scale,y*scale)
+          else
+            scaledSprite.sprite = game.add.sprite(x*scale,y*scale,label+'.x'+scale)
+            currentSprites.push(scaledSprite.sprite)
         clear: ->
-          if scaledSprite.sprite?
-            scaledSprite.sprite.kill()
-            scaledSprite.sprite = null
+          return if !scaledSprite.sprite?
+
+          scaledSprite.sprite.kill()
+          scaledSprite.sprite = null
         kill: ->
           scaledSprite.clear()
           scaledSprite.alive = false
