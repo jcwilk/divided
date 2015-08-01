@@ -9,6 +9,7 @@ window.divided.remoteScaler = (options) ->
   loadedScales = []
   spritesMap = {}
   currentSprites = []
+  isRescaling = true
 
   clearAllLiving = ->
     eachLivingScaledSprite (scaledSprite) ->
@@ -30,8 +31,10 @@ window.divided.remoteScaler = (options) ->
     registerPaths: (newPaths) -> $.extend(registeredPaths,newPaths)
     setScale: (s,cb) ->
       scale = s
+      isRescaling = true
 
-      onLoadComplete = ->
+      onRescaleComplete = ->
+        isRescaling = false
         drawAllLiving()
         cb()
 
@@ -47,10 +50,10 @@ window.divided.remoteScaler = (options) ->
         game.load.onLoadComplete.add ->
           #TODO: this would behave oddly if setScale calls stacked up
           game.load.onLoadComplete.removeAll()
-          onLoadComplete()
+          onRescaleComplete()
         game.load.start()
       else
-        onLoadComplete()
+        onRescaleComplete()
 
     getSprite: (label,options) ->
       {x,y} = options
@@ -70,7 +73,10 @@ window.divided.remoteScaler = (options) ->
         kill: ->
           scaledSprite.clear()
           scaledSprite.alive = false
-
+        reset: ->
+          scaledSprite.alive = true
+          if !isRescaling
+            scaledSprite.draw()
       }
 
       scaledSprite.draw()

@@ -140,3 +140,36 @@ describe "Remote Scaler", ->
       finishLoading()
       expect(sprite.reset).not.toHaveBeenCalled()
       expect(sprites.length).toEqual(oldLength)
+
+  describe 'reset', ->
+    scaledSprite = null
+    sprite = null
+
+    beforeEach ->
+      rs.setScale(2, ->)
+      finishLoading()
+      scaledSprite = rs.getSprite('apple', x: 10, y: 10)
+      sprite = scaledSprite.sprite
+      scaledSprite.kill()
+
+    it 'does not create a new sprite', ->
+      oldLength = sprites.length
+      scaledSprite.reset()
+      expect(sprites.length).toEqual(oldLength)
+
+    it 'immediately resets an old sprite', ->
+      #sprite happens to be the only sprite, luckily
+      spyOn(sprite, 'reset')
+      scaledSprite.reset()
+      expect(sprite.reset).toHaveBeenCalled()
+
+    describe 'when in the middle of a rescale to a new scale', ->
+      beforeEach ->
+        rs.setScale(4, ->)
+
+      it 'adds a new matching sprite of the new scale on complete', ->
+        scaledSprite.reset()
+        expect(sprites[1]).toBeUndefined()
+        finishLoading()
+        expect(sprites[1].x).toEqual(40)
+        expect(sprites[1].y).toEqual(40)
