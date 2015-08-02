@@ -71,9 +71,11 @@ window.divided.remoteScaler = (options) ->
     getSprite: (label,options) ->
       {x,y} = options
 
+      children = []
+
       scaledSprite = {
         draw: ->
-          return if isRescaling
+          return if isRescaling || scaledSprite.sprite?
 
           if firstDead = getFirstDeadCurrentSprite()
             scaledSprite.sprite = firstDead
@@ -81,21 +83,35 @@ window.divided.remoteScaler = (options) ->
           else
             scaledSprite.sprite = game.add.sprite(x*scale,y*scale,label+'.x'+scale)
             currentSprites.push(scaledSprite.sprite)
+
+          $.each children, (i, child) ->
+            child.draw()
+            scaledSprite.sprite.addChild(child.sprite)
         clear: ->
           return if !scaledSprite.sprite?
 
+          scaledSprite.sprite.removeChildren()
           scaledSprite.sprite.kill()
           scaledSprite.sprite = null
         kill: ->
+          return if !scaledSprite.alive
+
           scaledSprite.clear()
+          $.each children, (i, child) ->
+            child.kill()
           scaledSprite.alive = false
           aliveIndex = aliveScaledSprites.indexOf(scaledSprite)
           aliveScaledSprites.splice(aliveIndex,1)
         reset: ->
+          return if scaledSprite.alive
+
           scaledSprite.alive = true
           aliveScaledSprites.push(scaledSprite)
 
           scaledSprite.draw()
+        addChild: (childScaledSprite) ->
+          children.push(childScaledSprite)
+
       }
 
       scaledSprite.reset()

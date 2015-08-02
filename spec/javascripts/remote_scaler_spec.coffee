@@ -26,6 +26,7 @@ describe "Remote Scaler", ->
       add: {
         sprite: (x,y,label) ->
           newS = {
+            children: []
             alive: true
             x: x
             y: y
@@ -35,6 +36,10 @@ describe "Remote Scaler", ->
               newS.alive = true
               newS.x = x
               newS.y = y
+            addChild: (child) ->
+              newS.children.push(child)
+            removeChildren: () ->
+              newS.children = []
           }
           sprites.push newS
           newS
@@ -251,3 +256,33 @@ describe "Remote Scaler", ->
         finishLoading()
         expect(sprites[1].x).toEqual(40)
         expect(sprites[1].y).toEqual(40)
+
+  describe 'addChild', ->
+    scaledSprite = null
+    childScaledSprite = null
+
+    beforeEach ->
+      rs.setScale(2)
+      scaledSprite = rs.getSprite('apple', x: 10, y: 10)
+      childScaledSprite = rs.getSprite('apple', x: 5, y: 5)
+      scaledSprite.addChild(childScaledSprite)
+
+    it 'adds the child sprite as a child on load', ->
+      finishLoading()
+      expect(scaledSprite.sprite.children).toEqual([childScaledSprite.sprite])
+
+    it 'removes the child and kills it on kill', ->
+      finishLoading()
+      sprite = scaledSprite.sprite
+      childSprite = childScaledSprite.sprite
+      scaledSprite.kill()
+      expect(sprite.children).toEqual([])
+      expect(childSprite.alive).toEqual(false)
+
+    it 'removes the child and kills it on rescale', ->
+      finishLoading()
+      sprite = scaledSprite.sprite
+      childSprite = childScaledSprite.sprite
+      rs.setScale(4)
+      expect(sprite.children).toEqual([])
+      expect(childSprite.alive).toEqual(false)
