@@ -46,6 +46,7 @@ describe "Remote Scaler", ->
     rs.registerPaths(
       apple: {
         x2: '/assets/apple.x2.gif'
+        x3: '/assets/apple.x3.gif'
         x4: '/assets/apple.x4.gif'
       }
     )
@@ -130,9 +131,6 @@ describe "Remote Scaler", ->
         rs.getSprite('apple', x: 10, y: 10)
         rs.setScale(4, secondCb)
 
-      it 'does not add multiple oncomplete callbacks', ->
-        expect(game.load.onLoadComplete.callbacks.length).toEqual(1)
-
       it 'calls both callbacks at once, in order, on complete', ->
         expect(cbContainer).toEqual([])
         finishLoading()
@@ -173,10 +171,6 @@ describe "Remote Scaler", ->
         rs.setScale(4, ->)
         rs.setScale(2, ->)
 
-      it 'does not add multiple oncomplete callbacks', ->
-        rs.setScale(4, ->)
-        expect(game.load.onLoadComplete.callbacks.length).toEqual(1)
-
       it 'kills all sprites', ->
         expect($.grep(sprites, (s) -> s.alive).length).toBeGreaterThan(0)
         rs.setScale(4, ->)
@@ -189,6 +183,18 @@ describe "Remote Scaler", ->
         aliveSprites = $.grep(sprites, (s) -> s.alive)
         expect(aliveSprites.length).toEqual(1)
         expect(aliveSprites[0].label).toEqual('apple.x4')
+
+    describe 'when scaling to a loaded scale between scaling to two unloaded scales', ->
+      beforeEach ->
+        rs.setScale(2, ->)
+        finishLoading()
+        rs.getSprite('apple', x: 10, y: 10)
+        rs.setScale(3, ->)
+        rs.setScale(2, ->) #<--- already loaded one
+        rs.setScale(4, ->)
+
+      it 'does not add multiple oncomplete callbacks', ->
+        expect(game.load.onLoadComplete.callbacks.length).toEqual(1)
 
   describe 'scaledSprite.kill', ->
     scaledSprite = null
