@@ -2,10 +2,11 @@ window.divided?= {}
 window.divided.remoteScaler = (options) ->
   {game} = options
 
+  #keep this only alive so dead scaledSprites get collected
+  aliveScaledSprites = []
+
   registeredPaths = {}
   scale = null
-  allScaledSprites = []
-  onLoadComplete = null
   loadedScales = []
   spritesMap = {}
   currentSprites = []
@@ -24,9 +25,7 @@ window.divided.remoteScaler = (options) ->
     $.grep(currentSprites, (el)-> !el.alive)[0]
 
   eachLivingScaledSprite = (cb) ->
-    $.each allScaledSprites, (i, scaledSprite) ->
-      return if !scaledSprite.alive
-
+    $.each aliveScaledSprites, (i, scaledSprite) ->
       cb(scaledSprite)
 
   checkScaleLoaded = (s) ->
@@ -70,7 +69,6 @@ window.divided.remoteScaler = (options) ->
       {x,y} = options
 
       scaledSprite = {
-        alive: true
         draw: ->
           return if !scale? || isRescaling
 
@@ -88,13 +86,16 @@ window.divided.remoteScaler = (options) ->
         kill: ->
           scaledSprite.clear()
           scaledSprite.alive = false
+          aliveIndex = aliveScaledSprites.indexOf(scaledSprite)
+          aliveScaledSprites.splice(aliveIndex,1)
         reset: ->
           scaledSprite.alive = true
+          aliveScaledSprites.push(scaledSprite)
+
           scaledSprite.draw()
       }
 
-      scaledSprite.draw()
+      scaledSprite.reset()
 
-      allScaledSprites.push(scaledSprite)
       scaledSprite
   }
