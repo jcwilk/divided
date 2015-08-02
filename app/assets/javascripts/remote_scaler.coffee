@@ -9,9 +9,8 @@ window.divided.remoteScaler = (options) ->
   loadedScales = []
   spritesMap = {}
   currentSprites = []
-  isRescaling = true
+  isRescaling = false
   rescaleCallbacks = {}
-  queuedRescaleCount = 0
 
   clearAllLiving = ->
     eachLivingScaledSprite (scaledSprite) ->
@@ -33,6 +32,16 @@ window.divided.remoteScaler = (options) ->
   checkScaleLoaded = (s) ->
     $.inArray(s,loadedScales) >= 0
 
+  onLoadComplete = () ->
+    $.each rescaleCallbacks, (k,v) ->
+      cbScale = parseInt(k)
+      loadedScales.push(cbScale)
+      if cbScale == scale
+        isRescaling = false
+        drawAllLiving()
+      v()
+    rescaleCallbacks = {}
+
   obj = {
     registerPaths: (newPaths) -> $.extend(registeredPaths,newPaths)
     setScale: (s,cb) ->
@@ -47,27 +56,15 @@ window.divided.remoteScaler = (options) ->
         isRescaling = false
         drawAllLiving()
         cb()
-      else
-        if !rescaleCallbacks[scale]?
-          $.each(registeredPaths, (label,sizeMap) ->
-            game.load.image(label+'.x'+scale,sizeMap['x'+scale])
-          )
-          queuedRescaleCount+= 1
-          rescaleCallbacks[scale] = cb
-          if queuedRescaleCount == 1
-            isRescaling = true
-            game.load.onLoadComplete.addOnce ->
-              $.each rescaleCallbacks, (k,v) ->
-                cbScale = parseInt(k)
-                loadedScales.push(cbScale)
-                if cbScale == scale
-                  isRescaling = false
-                  drawAllLiving()
-                v()
-              rescaleCallbacks = {}
-              queuedRescaleCount = 0
-
-            game.load.start()
+      else if !rescaleCallbacks[scale]?
+        $.each(registeredPaths, (label,sizeMap) ->
+          game.load.image(label+'.x'+scale,sizeMap['x'+scale])
+        )
+        rescaleCallbacks[scale] = cb
+        if !isRescaling
+          isRescaling = true
+          game.load.onLoadComplete.addOnce(onLoadComplete)
+          game.load.start()
 
     getSprite: (label,options) ->
       {x,y} = options
@@ -75,7 +72,7 @@ window.divided.remoteScaler = (options) ->
       scaledSprite = {
         alive: true
         draw: ->
-          return if isRescaling
+          return if !scale? || isRescaling
 
           if firstDead = getFirstDeadCurrentSprite()
             scaledSprite.sprite = firstDead

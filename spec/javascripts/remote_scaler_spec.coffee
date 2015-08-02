@@ -10,17 +10,17 @@ describe "Remote Scaler", ->
 
   beforeEach ->
     sprites = []
-    onLoadCompleteCallbacks = []
     game = {
       load: {
         image: ->
         start: ->
         onLoadComplete: {
+          callbacks: []
           call: ->
-            $.each(onLoadCompleteCallbacks, (i,e) -> e())
-            onLoadCompleteCallbacks = []
+            $.each(game.load.onLoadComplete.callbacks, (i,e) -> e())
+            game.load.onLoadComplete.callbacks = []
           addOnce: (cb) ->
-            onLoadCompleteCallbacks.push(cb)
+            game.load.onLoadComplete.callbacks.push(cb)
         }
       }
       add: {
@@ -130,6 +130,9 @@ describe "Remote Scaler", ->
         rs.getSprite('apple', x: 10, y: 10)
         rs.setScale(4, secondCb)
 
+      it 'does not add multiple oncomplete callbacks', ->
+        expect(game.load.onLoadComplete.callbacks.length).toEqual(1)
+
       it 'calls both callbacks at once, in order, on complete', ->
         expect(cbContainer).toEqual([])
         finishLoading()
@@ -169,6 +172,10 @@ describe "Remote Scaler", ->
         rs.getSprite('apple', x: 10, y: 10)
         rs.setScale(4, ->)
         rs.setScale(2, ->)
+
+      it 'does not add multiple oncomplete callbacks', ->
+        rs.setScale(4, ->)
+        expect(game.load.onLoadComplete.callbacks.length).toEqual(1)
 
       it 'kills all sprites', ->
         expect($.grep(sprites, (s) -> s.alive).length).toBeGreaterThan(0)
