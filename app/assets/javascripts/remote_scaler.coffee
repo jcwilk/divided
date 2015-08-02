@@ -10,7 +10,8 @@ window.divided.remoteScaler = (options) ->
   spritesMap = {}
   currentSprites = []
   isRescaling = true
-  rescaleCallbacks = []
+  rescaleCallbacks = {}
+  queuedRescaleCount = 0
 
   clearAllLiving = ->
     eachLivingScaledSprite (scaledSprite) ->
@@ -29,6 +30,9 @@ window.divided.remoteScaler = (options) ->
 
       cb(scaledSprite)
 
+  checkScaleLoaded = (s) ->
+    $.inArray(s,loadedScales) >= 0
+
   obj = {
     registerPaths: (newPaths) -> $.extend(registeredPaths,newPaths)
     setScale: (s,cb) ->
@@ -39,25 +43,31 @@ window.divided.remoteScaler = (options) ->
       spritesMap[scale]?= []
       currentSprites = spritesMap[scale]
 
-      if $.inArray(scale,loadedScales) == -1
-        loadedScales.push(scale)
-        $.each(registeredPaths, (label,sizeMap) ->
-          game.load.image(label+'.x'+scale,sizeMap['x'+scale])
-        )
-        rescaleCallbacks.push(cb)
-        if rescaleCallbacks.length == 1
-          isRescaling = true
-          game.load.onLoadComplete.addOnce ->
-            isRescaling = false
-            drawAllLiving()
-            $.each(rescaleCallbacks, (i,e) -> e())
-            rescaleCallbacks = []
-
-          game.load.start()
-      else
+      if checkScaleLoaded(scale)
         isRescaling = false
         drawAllLiving()
         cb()
+      else
+        if !rescaleCallbacks[scale]?
+          $.each(registeredPaths, (label,sizeMap) ->
+            game.load.image(label+'.x'+scale,sizeMap['x'+scale])
+          )
+          queuedRescaleCount+= 1
+          rescaleCallbacks[scale] = cb
+          if queuedRescaleCount == 1
+            isRescaling = true
+            game.load.onLoadComplete.addOnce ->
+              $.each rescaleCallbacks, (k,v) ->
+                cbScale = parseInt(k)
+                loadedScales.push(cbScale)
+                if cbScale == scale
+                  isRescaling = false
+                  drawAllLiving()
+                v()
+              rescaleCallbacks = {}
+              queuedRescaleCount = 0
+
+            game.load.start()
 
     getSprite: (label,options) ->
       {x,y} = options

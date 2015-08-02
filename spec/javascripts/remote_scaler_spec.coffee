@@ -140,15 +140,48 @@ describe "Remote Scaler", ->
         expect($.grep(sprites, (s) -> s.label == 'apple.x4').length).toEqual(1)
         expect($.grep(sprites, (s) -> s.label == 'apple.x2').length).toEqual(0)
 
-    # describe 'when returning to a previously rendered scale before a new scale has completed', ->
-    #   beforeEach ->
-    #     rs.stScale(2, ->)
-    #     finishLoading()
-    #     rs.getSprite('apple', x: 10, y: 10)
-    #     rs.setScale(4, ->)
-    #     rs.setScale(2, ->)
+    describe 'when returning to a previously rendered scale before a new scale has completed', ->
+      sprite = null
 
-      #it 'renders '
+      beforeEach ->
+        rs.setScale(2, ->)
+        finishLoading()
+        sprite = rs.getSprite('apple', x: 10, y: 10).sprite
+        rs.setScale(4, ->)
+
+      it 'renders the sprite immediately', ->
+        spyOn(sprite,'reset')
+        rs.setScale(2, ->)
+        expect(sprite.reset).toHaveBeenCalled()
+
+      it 'does not reset or create any sprites on completion', ->
+        rs.setScale(2, ->)
+        spyOn(sprite,'reset')
+        oldLength = sprites.length
+        finishLoading()
+        expect(sprite.reset).not.toHaveBeenCalled()
+        expect(sprites.length).toEqual(oldLength)
+
+    describe 'when returning to a previously rendered scale and then returning to a still loading scale', ->
+      beforeEach ->
+        rs.setScale(2, ->)
+        finishLoading()
+        rs.getSprite('apple', x: 10, y: 10)
+        rs.setScale(4, ->)
+        rs.setScale(2, ->)
+
+      it 'kills all sprites', ->
+        expect($.grep(sprites, (s) -> s.alive).length).toBeGreaterThan(0)
+        rs.setScale(4, ->)
+        expect($.grep(sprites, (s) -> s.alive).length).toEqual(0)
+
+      it 'renders the sprite for the new scale on complete', ->
+        rs.setScale(4, ->)
+        expect($.grep(sprites, (s) -> s.alive).length).toEqual(0)
+        finishLoading()
+        aliveSprites = $.grep(sprites, (s) -> s.alive)
+        expect(aliveSprites.length).toEqual(1)
+        expect(aliveSprites[0].label).toEqual('apple.x4')
 
   describe 'scaledSprite.kill', ->
     scaledSprite = null
