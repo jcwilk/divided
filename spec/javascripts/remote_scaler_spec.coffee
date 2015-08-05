@@ -261,28 +261,54 @@ describe "Remote Scaler", ->
     scaledSprite = null
     childScaledSprite = null
 
-    beforeEach ->
-      rs.setScale(2)
-      scaledSprite = rs.getSprite('apple', x: 10, y: 10)
-      childScaledSprite = rs.getSprite('apple', x: 5, y: 5)
-      scaledSprite.addChild(childScaledSprite)
+    describe 'when a scale is already loaded', ->
+      beforeEach ->
+        rs.setScale(2)
+        finishLoading()
+        scaledSprite = rs.getSprite('apple', x: 10, y: 10)
+        childScaledSprite = rs.getSprite('apple', x: 5, y: 5)
+        scaledSprite.addChild(childScaledSprite)
 
-    it 'adds the child sprite as a child on load', ->
-      finishLoading()
-      expect(scaledSprite.sprite.children).toEqual([childScaledSprite.sprite])
+      it 'adds the child sprite immediately', ->
+        expect(scaledSprite.sprite.children).toEqual([childScaledSprite.sprite])
 
-    it 'removes the child and kills it on kill', ->
-      finishLoading()
-      sprite = scaledSprite.sprite
-      childSprite = childScaledSprite.sprite
-      scaledSprite.kill()
-      expect(sprite.children).toEqual([])
-      expect(childSprite.alive).toEqual(false)
+      it 'removes the child and kills it on kill', ->
+        sprite = scaledSprite.sprite
+        childSprite = childScaledSprite.sprite
+        scaledSprite.kill()
+        expect(sprite.children).toEqual([])
+        expect(childSprite.alive).toEqual(false)
 
-    it 'removes the child and kills it on rescale', ->
-      finishLoading()
-      sprite = scaledSprite.sprite
-      childSprite = childScaledSprite.sprite
-      rs.setScale(4)
-      expect(sprite.children).toEqual([])
-      expect(childSprite.alive).toEqual(false)
+      it 'removes the child and kills it on rescale', ->
+        sprite = scaledSprite.sprite
+        childSprite = childScaledSprite.sprite
+        rs.setScale(4)
+        expect(sprite.children).toEqual([])
+        expect(childSprite.alive).toEqual(false)
+
+    describe 'when not currently rendering', ->
+      beforeEach ->
+        rs.setScale(2)
+        scaledSprite = rs.getSprite('apple', x: 10, y: 10)
+        childScaledSprite = rs.getSprite('apple', x: 5, y: 5)
+        scaledSprite.addChild(childScaledSprite)
+
+      it 'adds the child sprite as a child on load', ->
+        finishLoading()
+        expect(scaledSprite.sprite.children).toEqual([childScaledSprite.sprite])
+
+      it 'removes the child and kills it on kill', ->
+        finishLoading()
+        sprite = scaledSprite.sprite
+        childSprite = childScaledSprite.sprite
+        scaledSprite.kill()
+        expect(sprite.children).toEqual([])
+        expect(childSprite.alive).toEqual(false)
+
+      it 'removes the child and kills it on rescale', ->
+        finishLoading()
+        sprite = scaledSprite.sprite
+        childSprite = childScaledSprite.sprite
+        rs.setScale(4)
+        expect(sprite.children).toEqual([])
+        expect(childSprite.alive).toEqual(false)

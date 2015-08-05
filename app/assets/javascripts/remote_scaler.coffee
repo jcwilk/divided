@@ -109,8 +109,11 @@ window.divided.remoteScaler = (options) ->
           aliveScaledSprites.push(scaledSprite)
 
           scaledSprite.draw()
-        addChild: (childScaledSprite) ->
-          children.push(childScaledSprite)
+        addChild: (child) ->
+          children.push(child)
+          if scaledSprite.sprite?
+            child.draw()
+            scaledSprite.sprite.addChild(child.sprite)
 
       }
 
