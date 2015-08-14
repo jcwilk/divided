@@ -47,6 +47,7 @@ window.divided.remoteScaler = (options) ->
     registerPaths: (newPaths) ->
       $.extend(registeredPaths,newPaths)
     setScale: (s,cb) ->
+      obj.scale = s
       scale = s
       cb?= ->
 
@@ -97,6 +98,8 @@ window.divided.remoteScaler = (options) ->
           else
             scaledSprite.sprite = game.add.sprite(x*scale,y*scale,label+'.x'+scale)
             currentSprites.push(scaledSprite.sprite)
+
+          scaledSprite.sprite.frame = scaledSprite.frame
 
           $.each children, (i, child) ->
             child.draw()

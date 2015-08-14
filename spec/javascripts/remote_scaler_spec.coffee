@@ -94,6 +94,12 @@ describe "Remote Scaler", ->
       finishLoading()
       expect(onFinish).toHaveBeenCalled()
 
+    it 'transfers the frame attribute to the new sprite', ->
+      rs.setScale(4)
+      rs.getSprite('apple', x: 10, y: 10).frame = 2
+      finishLoading()
+      expect(sprites[0].frame).toEqual(2)
+
     describe 'when switching to a second scale', ->
       beforeEach ->
         rs.setScale(2, ->)

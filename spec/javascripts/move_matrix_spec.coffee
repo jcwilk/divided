@@ -64,3 +64,13 @@ describe "Move Matrix", () ->
         expect(mm.all[0].x).toEqual(3)
         expect(mm.all[0].y).toEqual(4)
 
+  describe "any", ->
+    beforeEach ->
+      mm.at(3,4).addMoves(att: 'ya')
+
+    it 'is false at an empty spot', ->
+      expect(mm.at(4,3).any()).toBeFalsy()
+
+    it 'is true at a spot with moves', ->
+      expect(mm.at(3,4).any()).toBeTruthy()
+
