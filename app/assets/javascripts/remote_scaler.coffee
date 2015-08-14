@@ -44,7 +44,8 @@ window.divided.remoteScaler = (options) ->
     rescaleCallbacks = {}
 
   obj = {
-    registerPaths: (newPaths) -> $.extend(registeredPaths,newPaths)
+    registerPaths: (newPaths) ->
+      $.extend(registeredPaths,newPaths)
     setScale: (s,cb) ->
       scale = s
       cb?= ->
@@ -58,8 +59,21 @@ window.divided.remoteScaler = (options) ->
         drawAllLiving()
         cb()
       else if !rescaleCallbacks[scale]?
-        $.each(registeredPaths, (label,sizeMap) ->
-          game.load.image(label+'.x'+scale,sizeMap['x'+scale])
+        $.each(registeredPaths, (label,sizeAttrs) ->
+          switch sizeAttrs.type
+            when 'spritesheet'
+              game.load.spritesheet(
+                label+'.x'+scale,
+                sizeAttrs.scales[scale-1],
+                sizeAttrs.width*scale,
+                sizeAttrs.height*scale,
+                sizeAttrs.count
+              )
+            when 'image'
+              game.load.image(
+                label+'.x'+scale,
+                sizeAttrs.scales[scale-1]
+              )
         )
         rescaleCallbacks[scale] = cb
         if !isLoading

@@ -13,6 +13,7 @@ describe "Remote Scaler", ->
     game = {
       load: {
         image: ->
+        spritesheet: ->
         start: ->
         onLoadComplete: {
           callbacks: []
@@ -50,9 +51,25 @@ describe "Remote Scaler", ->
     )
     rs.registerPaths(
       apple: {
-        x2: '/assets/apple.x2.gif'
-        x3: '/assets/apple.x3.gif'
-        x4: '/assets/apple.x4.gif'
+        type: 'spritesheet'
+        width: 5
+        height: 6
+        count: 3
+        scales: [
+          '/assets/apple.x1.gif',
+          '/assets/apple.x2.gif',
+          '/assets/apple.x3.gif',
+          '/assets/apple.x4.gif'
+        ]
+      }
+      orange: {
+        type: 'image'
+        scales: [
+          '/assets/orange.x1.gif',
+          '/assets/orange.x2.gif',
+          '/assets/orange.x3.gif',
+          '/assets/orange.x4.gif'
+        ]
       }
     )
 
@@ -60,10 +77,15 @@ describe "Remote Scaler", ->
     expect(rs).toEqual(jasmine.any(Object))
 
   describe 'setScale', ->
-    it 'loads the resources for that scale', ->
+    it 'loads spritesheet resources for that scale', ->
+      spyOn(game.load, 'spritesheet')
+      rs.setScale(4, ->)
+      expect(game.load.spritesheet).toHaveBeenCalledWith('apple.x4','/assets/apple.x4.gif',20,24,3)
+
+    it 'loads image resources for that scale', ->
       spyOn(game.load, 'image')
       rs.setScale(4, ->)
-      expect(game.load.image).toHaveBeenCalledWith('apple.x4','/assets/apple.x4.gif')
+      expect(game.load.image).toHaveBeenCalledWith('orange.x4','/assets/orange.x4.gif')
 
     it 'calls the callback when the loading is complete', ->
       onFinish = jasmine.createSpy('onFinish')
