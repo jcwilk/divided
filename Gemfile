@@ -20,11 +20,14 @@ group :assets do
   gem 'uglifier', '>= 1.3.0'
 end
 
+group :assets, :development do
+  gem 'rmagick'
+end
+
 group :development, :test do
   gem 'grape-rails-routes'
   gem 'pry'
   gem 'pry-rescue'
-  gem 'rmagick'
   gem 'rspec-rails', '~> 3.1.0'
   gem 'spring'
   gem "spring-commands-rspec"
