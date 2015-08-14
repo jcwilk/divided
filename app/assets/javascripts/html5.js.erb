@@ -3,6 +3,7 @@
 //= require selection_overlay
 //= require player_renderer
 //= require player_pool
+//= require remote_scaler
 
 $(function() {
   var sliderContainer = {};
@@ -27,17 +28,23 @@ $(function() {
 
   var background, walls, floor, cursors;
   var scaler = {
+    xPosToUnscaledX: function(xPos) {
+      return (xPos*10+5-50);
+    },
+    yPosToUnscaledY: function(yPos) {
+      return scaler.xPosToUnscaledX(yPos);
+    },
     xPosToX: function(xPos) {
-      return (xPos*10+5-50)*scaler.scale;
+      return scaler.xPosToUnscaledX(xPos)*scaler.scale;
     },
     yPosToY: function(yPos) {
       return scaler.xPosToX(yPos);
     },
     xToXPos: function(x) {
-      return Math.round((x-5+50)/10/scaler.scale);
+      return Math.round((x-(game.world.width/2))/10/scaler.scale-0.5)+5;
     },
     yToYPos: function(y) {
-      return scaler.xToXPos(y);
+      return Math.round((y-(game.world.height/2))/10/scaler.scale-0.5)+5;
     },
     scale: 4
   }
@@ -53,7 +60,7 @@ $(function() {
 
   var TILE_SIZE = 40;
 
-  var selectionOverlay, playerPool;
+  var selectionOverlay, playerPool, remoteScaler;
 
   var resourceFromJSON = function(json) {
     var res = new Hyperagent.Resource();
@@ -75,11 +82,13 @@ $(function() {
     min = width > height*0.95 ? height*0.95 : width;
     var scale = Math.floor(min/100);
     if(scale < 1) scale = 1;
+    if(scale > 8) scale = 8;
     if(floor !== undefined) {
       floor.scale.x = scale;
       floor.scale.y = scale;
     }
     scaler.scale = scale;
+    remoteScaler.setScale(scale)
 
     if(selectionOverlay !== undefined) selectionOverlay.redraw()
     if(playerPool !== undefined) playerPool.redraw()
@@ -98,20 +107,34 @@ $(function() {
       game.scale.scaleMode = Phaser.ScaleManager.NO_SCALE;
       game.scale.pageAlignHorizontally = true;
       game.scale.pageAlignVertically = true;
+
+      remoteScaler = window.divided.remoteScaler({
+        game: game
+      })
+      remoteScaler.registerPaths({
+        rgb_glow: {
+          type: 'spritesheet',
+          width: 10,
+          height: 10,
+          count: 12,
+          scales: [
+            <%= (1..8).map {|i| asset_path("rotating_colors.x#{i}.gif") }.map(&:inspect).join(',') %>
+          ]
+        }
+      })
+
       resizeWorld();
       $(window).resize(resizeWorld);
     },
     preload: function() {
       game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
-      game.input.onDown.add(function(){
+      game.input.onDown.addOnce(function(){
         game.scale.startFullScreen(false);
-        game.input.onDown.removeAll();
       },this);
       loadingText = game.add.text(0, 0, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
       <%= %w(space_90.gif 100x100_pathway_dirt.gif).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       window.divided.playerRenderer.preload(game);
-      game.load.spritesheet('rgb_glow', <%= asset_path('rotating_colors.png').inspect %>, 10, 10, 12);
     },
     create: function(){
       //hax to imitate a tilesprite because phaser is terrible at sharp-scaling them
@@ -135,14 +158,15 @@ $(function() {
       floor.smoothed = false;
       floor.scale.set(scaler.scale);
 
-      loadingText.destroy();
+      if(loadingText !== undefined) loadingText.destroy();
       loadingText = game.add.text(0, 0, "Waiting to join...", loadingTextStyle);
       loadingText.anchor.set(0.5);
 
       selectionOverlay = window.divided.selectionOverlay({
-        scaler:    scaler,
-        extConfig: sliderContainer,
-        game:      game
+        remoteScaler: remoteScaler,
+        scaler:       scaler,
+        extConfig:    sliderContainer,
+        game:         game
       });
 
       playerPool = window.divided.playerPool({

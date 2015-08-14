@@ -21,14 +21,15 @@ group :assets do
 end
 
 group :development, :test do
+  gem 'grape-rails-routes'
   gem 'pry'
   gem 'pry-rescue'
+  gem 'rmagick'
   gem 'rspec-rails', '~> 3.1.0'
   gem 'spring'
   gem "spring-commands-rspec"
   gem 'spring-commands-teaspoon'
   gem 'teaspoon-jasmine'
-  gem 'grape-rails-routes'
 end
 
 group :test do

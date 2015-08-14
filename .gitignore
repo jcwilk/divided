@@ -15,3 +15,5 @@
 /tmp
 
 Thumbs.db
+
+/app/assets/images/*.x*.gif

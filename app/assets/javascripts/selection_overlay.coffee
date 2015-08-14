@@ -1,13 +1,11 @@
 window.divided?= {}
 selectionOverlay = (options) ->
-  {scaler,extConfig,game} = options
+  {remoteScaler,scaler,extConfig,game} = options
 
-  {xPosToX,yPosToY} = scaler
+  {xPosToX,yPosToY,xPosToUnscaledX,yPosToUnscaledY,xToXPos,yToYPos} = scaler
 
-  activeGlows = game.add.group()
-  activeGlows.alpha = 1
+  activeGlows = []
   texts = game.add.group()
-  glows = []
 
   debug = () ->
     console.log("activeGlows: "+activeGlows.length+" living: "+activeGlows.countLiving())
@@ -36,8 +34,8 @@ selectionOverlay = (options) ->
     t
 
   glowForActionsAtPos = (rotation,xPos,yPos) ->
-    x = xPosToX(xPos)
-    y = yPosToY(yPos)
+    x = xPosToUnscaledX(xPos-0.5)
+    y = yPosToUnscaledY(yPos-0.5)
     glow = obj.getGlow(x,y)
 
     action = rotation[0]
@@ -50,7 +48,6 @@ selectionOverlay = (options) ->
     text = getText(action.toUpperCase(), xPos, yPos)
 
     glow.fadeAndKill = () ->
-      glow.events.onInputUp.removeAll()
       glow.kill()
       text.kill()
     return glow
@@ -60,25 +57,41 @@ selectionOverlay = (options) ->
   deferredSelection = null
   lastMoves = null
 
+  game.input.onUp.add (e) ->
+    xPos = xToXPos(e.x)
+    yPos = yToYPos(e.y)
+    at = mm.at(xPos,yPos)
+    if at.any()
+      obj.clearGlows()
+      url = at.moves[Object.keys(at.moves)[0]]
+
+      deferredSelection.resolve(url)
+      $.ajax(url, {
+        type: "POST",
+        statusCode: {
+          422: (response) ->
+            #TODO: move this up out of the POST
+            #game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
+          500: (response) ->
+            #not really relevant anymore
+            #location.reload()
+          403: (response) ->
+            #TODO: auth lol
+            #location.reload()
+        }
+      })
+
   obj = {
     at: (x,y) ->
       mm.at(x,y)
     getGlow: (x,y) ->
-      g = $.grep(glows,((gl) -> !gl.alive))[0]
-      if g
-        g.reset(x,y)
-        g.alpha = 1
-      else
-        g = game.add.sprite(x,y,'rgb_glow')
-        glows.push(g)
-        g.anchor.set(0.5)
-        g.smoothed = false
-      g.scale.set(scaler.scale)
-      activeGlows.add(g)
+      g = remoteScaler.getSprite('rgb_glow', x: x, y: y)
+      activeGlows.push(g)
       g
     clearGlows: () ->
-      activeGlows.callAllExists('fadeAndKill',true)
-      activeGlows.removeAll()
+      $.each activeGlows, (i, glow) ->
+        glow.fadeAndKill()
+      activeGlows = []
     reset: () ->
       mm = window.divided.moveMatrix()
       obj.clearGlows()
@@ -91,30 +104,8 @@ selectionOverlay = (options) ->
       if lastMoves?
         obj.drawRemoteMoves(lastMoves)
     drawMatrixGlows: () ->
-      currentDefer = deferredSelection
       $.each mm.all, (i,at) ->
         glow = glowForActionsAtPos(Object.keys(at.moves),at.x,at.y)
-        glow.inputEnabled = true
-        glow.events.onInputUp.add (g) ->
-          obj.clearGlows()
-
-          url = at.moves[Object.keys(at.moves)[0]]
-
-          currentDefer.resolve(url)
-          $.ajax(url, {
-            type: "POST",
-            statusCode: {
-              422: (response) ->
-                #TODO: move this up out of the POST
-                #game.add.tween(player).to({x: player.x-5},50,Phaser.Easing.Default,true,0,5,true);
-              500: (response) ->
-                #not really relevant anymore
-                #location.reload()
-              403: (response) ->
-                #TODO: auth lol
-                #location.reload()
-            }
-          })
     selectionForParticipant: (participant) ->
       obj.reset()
 
