@@ -99,7 +99,7 @@ window.divided.remoteScaler = (options) ->
             scaledSprite.sprite = game.add.sprite(x*scale,y*scale,label+'.x'+scale)
             currentSprites.push(scaledSprite.sprite)
 
-          scaledSprite.sprite.frame = scaledSprite.frame
+          scaledSprite.apply()
 
           $.each children, (i, child) ->
             child.draw()
@@ -119,6 +119,10 @@ window.divided.remoteScaler = (options) ->
           scaledSprite.alive = false
           aliveIndex = aliveScaledSprites.indexOf(scaledSprite)
           aliveScaledSprites.splice(aliveIndex,1)
+        apply: ->
+          return if !scaledSprite.sprite?
+
+          scaledSprite.sprite.frame = scaledSprite.frame || 0
         reset: ->
           return if scaledSprite.alive
 

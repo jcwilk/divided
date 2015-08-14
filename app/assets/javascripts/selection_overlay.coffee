@@ -44,6 +44,7 @@ selectionOverlay = (options) ->
       glow.frame = 4
     else
       glow.frame = 0
+    glow.apply()
 
     text = getText(action.toUpperCase(), xPos, yPos)
 
