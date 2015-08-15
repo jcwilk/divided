@@ -77,6 +77,12 @@ $(function() {
   var firstHeight = window.innerHeight;
   var firstWidth = window.innerWidth;
 
+  var centerCamera = function() {
+    game.world.setBounds(0-game.width/2,0-game.height/2,game.width,game.height);
+    game.camera.x = 0-game.width/2;
+    game.camera.y = 0-game.height/2;
+  }
+
   var resizeWorld = function() {
     height = window.innerHeight;
     width = window.innerWidth;
@@ -94,9 +100,7 @@ $(function() {
       background.reset(-400*scaler.scale,-400*scaler.scale)
       background.scale.set(scaler.scale)
     }
-    game.world.setBounds(0-width/2,0-height/2,width,height);
-    game.camera.x = 0-width/2;
-    game.camera.y = 0-height/2;
+    centerCamera()
   }
 
   var game = new Phaser.Game(firstWidth, firstHeight, Phaser.CANVAS, 'divided-viewport', {
@@ -122,11 +126,9 @@ $(function() {
           scales: [<%= scaled_list_for_name('100x100_pathway_dirt') %>]
         }
       })
-
-      resizeWorld();
-      $(window).resize(resizeWorld);
     },
     preload: function() {
+      centerCamera()
       game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
       game.input.onDown.addOnce(function(){
         game.scale.startFullScreen(false);
@@ -137,6 +139,9 @@ $(function() {
       window.divided.playerRenderer.preload(game);
     },
     create: function(){
+      resizeWorld();
+      $(window).resize(resizeWorld);
+
       //hax to imitate a tilesprite because phaser is terrible at sharp-scaling them
       background = null
       for(x = 0; x < 800; x+= 90) {
