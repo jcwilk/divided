@@ -5,6 +5,8 @@
 //= require player_pool
 //= require remote_scaler
 
+<% environment.context_class.instance_eval { include ApplicationHelper } %>
+
 $(function() {
   var sliderContainer = {};
   var player_uuid = window._divided_player_uuid;
@@ -83,10 +85,6 @@ $(function() {
     var scale = Math.floor(min/100);
     if(scale < 1) scale = 1;
     if(scale > 8) scale = 8;
-    if(floor !== undefined) {
-      floor.scale.x = scale;
-      floor.scale.y = scale;
-    }
     scaler.scale = scale;
     remoteScaler.setScale(scale)
 
@@ -117,9 +115,11 @@ $(function() {
           width: 10,
           height: 10,
           count: 12,
-          scales: [
-            <%= (1..8).map {|i| asset_path("rotating_colors.x#{i}.gif") }.map(&:inspect).join(',') %>
-          ]
+          scales: [<%= scaled_list_for_name('rotating_colors') %>]
+        },
+        '100x100_pathway_dirt': {
+          type: 'image',
+          scales: [<%= scaled_list_for_name('100x100_pathway_dirt') %>]
         }
       })
 
@@ -133,7 +133,7 @@ $(function() {
       },this);
       loadingText = game.add.text(0, 0, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
-      <%= %w(space_90.gif 100x100_pathway_dirt.gif).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
+      <%= %w(space_90.gif).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       window.divided.playerRenderer.preload(game);
     },
     create: function(){
@@ -153,10 +153,7 @@ $(function() {
       background.reset(-400*scaler.scale,-400*scaler.scale)
       background.scale.set(scaler.scale)
 
-      floor = game.add.sprite(0,0,'100x100_pathway_dirt');
-      floor.anchor.set(0.5);
-      floor.smoothed = false;
-      floor.scale.set(scaler.scale);
+      floor = remoteScaler.getSprite('100x100_pathway_dirt', {x: -50, y: -50});
 
       if(loadingText !== undefined) loadingText.destroy();
       loadingText = game.add.text(0, 0, "Waiting to join...", loadingTextStyle);
