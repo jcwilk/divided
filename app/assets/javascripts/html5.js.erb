@@ -154,6 +154,7 @@ $(function() {
       background.scale.set(scaler.scale)
 
       floor = remoteScaler.getSprite('100x100_pathway_dirt', {x: -50, y: -50});
+      floor.groupWith(game.add.group())
 
       if(loadingText !== undefined) loadingText.destroy();
       loadingText = game.add.text(0, 0, "Waiting to join...", loadingTextStyle);

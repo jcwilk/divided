@@ -10,7 +10,7 @@ window.divided.remoteScaler = (options) ->
   loadedScales = []
   spritesMap = {}
   currentSprites = []
-  isRescaling = false
+  isRescaling = true
   isLoading = false
   rescaleCallbacks = {}
 
@@ -87,6 +87,12 @@ window.divided.remoteScaler = (options) ->
       {x,y} = options
 
       children = []
+      group = null
+
+      applyGroup = ->
+        return if !scaledSprite.sprite? || !group? || group.getIndex(scaledSprite.sprite) >= 0
+
+        group.add(scaledSprite.sprite)
 
       scaledSprite = {
         draw: ->
@@ -109,6 +115,8 @@ window.divided.remoteScaler = (options) ->
 
           scaledSprite.sprite.removeChildren()
           scaledSprite.sprite.kill()
+          if group?
+            group.removeChild(scaledSprite.sprite)
           scaledSprite.sprite = null
         kill: ->
           return if !scaledSprite.alive
@@ -123,6 +131,7 @@ window.divided.remoteScaler = (options) ->
           return if !scaledSprite.sprite?
 
           scaledSprite.sprite.frame = scaledSprite.frame || 0
+          applyGroup()
         reset: ->
           return if scaledSprite.alive
 
@@ -135,7 +144,10 @@ window.divided.remoteScaler = (options) ->
           if scaledSprite.sprite?
             child.draw()
             scaledSprite.sprite.addChild(child.sprite)
+        groupWith: (g) ->
+          group = g
 
+          applyGroup()
       }
 
       scaledSprite.reset()

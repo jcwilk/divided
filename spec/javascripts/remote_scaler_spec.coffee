@@ -340,3 +340,35 @@ describe "Remote Scaler", ->
         rs.setScale(4)
         expect(sprite.children).toEqual([])
         expect(childSprite.alive).toEqual(false)
+
+  describe 'groupWith', ->
+    remoteSprite = null
+    group = null
+    beforeEach ->
+      remoteSprite = rs.getSprite('apple', x: 10, y: 10)
+      rs.setScale(2)
+      group = {
+        add: (sp) -> group.sprites.push(sp)
+        removeChild: (sp) ->
+          index = group.sprites.indexOf(sp)
+          group.sprites.splice(index,1) if index >= 0
+        sprites: []
+        getIndex: (sp) ->
+          group.sprites.indexOf(sp)
+      }
+
+    it 'puts an existing sprite into the group', ->
+      finishLoading()
+      remoteSprite.groupWith(group)
+      expect(group.sprites).toEqual(sprites)
+
+    it 'puts later sprites into the group', ->
+      remoteSprite.groupWith(group)
+      finishLoading()
+      expect(group.sprites).toEqual(sprites)
+
+    it 'removes the sprite from the group on kill', ->
+      finishLoading()
+      remoteSprite.groupWith(group)
+      remoteSprite.kill()
+      expect(group.sprites).toEqual([])
