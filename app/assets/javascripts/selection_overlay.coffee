@@ -5,6 +5,7 @@ selectionOverlay = (options) ->
   {xPosToX,yPosToY,xPosToUnscaledX,yPosToUnscaledY,xToXPos,yToYPos} = scaler
 
   activeGlows = []
+  glowLayer = game.add.group()
   texts = game.add.group()
 
   debug = () ->
@@ -87,6 +88,7 @@ selectionOverlay = (options) ->
       mm.at(x,y)
     getGlow: (x,y) ->
       g = remoteScaler.getSprite('rgb_glow', x: x, y: y)
+      g.groupWith(glowLayer)
       activeGlows.push(g)
       g
     clearGlows: () ->
