@@ -96,10 +96,6 @@ $(function() {
 
     if(selectionOverlay !== undefined) selectionOverlay.redraw()
     if(playerPool !== undefined) playerPool.redraw()
-    if(background !== undefined) {
-      background.reset(-400*scaler.scale,-400*scaler.scale)
-      background.scale.set(scaler.scale)
-    }
     centerCamera()
   }
 
@@ -124,39 +120,35 @@ $(function() {
         '100x100_pathway_dirt': {
           type: 'image',
           scales: [<%= scaled_list_for_name('100x100_pathway_dirt') %>]
+        },
+        space_90: {
+          type: 'image',
+          scales: [<%= scaled_list_for_name('space_90') %>]
         }
       })
     },
     preload: function() {
       centerCamera()
-      game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
-      game.input.onDown.addOnce(function(){
-        game.scale.startFullScreen(false);
-      },this);
       loadingText = game.add.text(0, 0, "Loading assets...", loadingTextStyle);
       loadingText.anchor.set(0.5);
-      <%= %w(space_90.gif).map{|f| name=f.split('.').first; "game.load.image(#{name.inspect}, #{asset_path(f).inspect})" }.join(';') %>;
       window.divided.playerRenderer.preload(game);
     },
     create: function(){
       resizeWorld();
       $(window).resize(resizeWorld);
 
-      //hax to imitate a tilesprite because phaser is terrible at sharp-scaling them
-      background = null
-      for(x = 0; x < 800; x+= 90) {
-        for(y = 0; y < 800; y+= 90) {
-          bg = game.add.sprite(x,y,'space_90')
-          bg.smoothed = false
-          if(background === null) {
-            background = bg
-          } else {
-            background.addChild(bg)
-          }
+      game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
+      game.input.onDown.addOnce(function(){
+        game.scale.startFullScreen(false);
+      },this);
+
+      background = game.add.group()
+      for(x = -400; x < 400; x+= 90) {
+        for(y = -400; y < 400; y+= 90) {
+          bg = remoteScaler.getSprite('space_90', {x: x, y: y})
+          bg.groupWith(background)
         }
       }
-      background.reset(-400*scaler.scale,-400*scaler.scale)
-      background.scale.set(scaler.scale)
 
       floor = remoteScaler.getSprite('100x100_pathway_dirt', {x: -50, y: -50});
       floor.groupWith(game.add.group())

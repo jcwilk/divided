@@ -1,5 +1,5 @@
 task :resize_assets do
-  %w(100x100_pathway_dirt.gif rotating_colors.png).each do |file|
+  %w(100x100_pathway_dirt.gif rotating_colors.png space_90.gif).each do |file|
     name = file.split('.')[0..-2].join('.')
     i=Magick::Image.read("./app/assets/images/#{file}")[0]
     (1..8).each do |scale|
